@@ -1,51 +1,64 @@
 import React, { useState } from 'react';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from '@/components/ui/alert-dialog';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import useTranslation from '@/hooks/use-translation';
 
+// Define the shape of the event data expected by the callback
+interface NewEventData {
+  name: string;
+  description: string;
+}
+
 interface EventCreateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  onEventCreated: (newEvent: NewEventData) => void; // Add prop for the callback
 }
 
-export const EventCreateDialog: React.FC<EventCreateDialogProps> = ({ open, onOpenChange }) => {
+export const EventCreateDialog: React.FC<EventCreateDialogProps> = ({ open, onOpenChange, onEventCreated }) => {
   const [eventName, setEventName] = useState('');
   const [eventDescription, setEventDescription] = useState('');
   const { t } = useTranslation();
 
   const handleCreateEvent = () => {
-    // Add event creation logic here
-    console.log('Creating event:', { name: eventName, description: eventDescription });
+    // Call the callback function passed from the parent
+    onEventCreated({ name: eventName, description: eventDescription });
+    // Reset form fields
+    setEventName('');
+    setEventDescription('');
+    // Close the dialog
     onOpenChange(false);
   };
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogTrigger asChild>
-        {/* This trigger is not visible, it's triggered from the parent component */}
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogTitle>Create New Event</AlertDialogTitle>
-          <AlertDialogDescription>{t('Enter the details for the new event.')}</AlertDialogDescription>
-          <div className="grid gap-4 py-4">
-            <div className="grid gap-2">
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      {/* Trigger is handled by the parent component */}
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>{t('Create New Event')}</DialogTitle>
+          <DialogDescription>{t('Enter the details for the new event.')}</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
             <Label htmlFor="name">{t('Event Name')}</Label>
             <Input
               id="name"
               placeholder={t('Event name')}
               value={eventName}
               onChange={(e) => setEventName(e.target.value)}
-              className="col-span-3"
+              className="w-full" // Adjusted class
             />
           </div>
           <div className="grid gap-2">
@@ -55,13 +68,21 @@ export const EventCreateDialog: React.FC<EventCreateDialogProps> = ({ open, onOp
               placeholder={t('Event description')}
               value={eventDescription}
               onChange={(e) => setEventDescription(e.target.value)}
-              className="col-span-3"
+              className="w-full" // Adjusted class
             />
           </div>
         </div>
-        <AlertDialogAction onClick={handleCreateEvent}>Create</AlertDialogAction>
-        <AlertDialogCancel>Cancel</AlertDialogCancel>
-      </AlertDialogContent>
-    </AlertDialog>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">
+              {t('Cancel')}
+            </Button>
+          </DialogClose>
+          <Button type="button" onClick={handleCreateEvent}>
+            {t('Create')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -4,13 +4,14 @@ import React, {useState} from 'react';
 import {useRouter} from 'next/navigation';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {Input} from '@/components/ui/input';
-import {Label} from '@/components/ui/label';
-import {Separator} from '@/components/ui/separator';
-import {Calendar} from '@/components/ui/calendar';
-import {Popover, PopoverContent, PopoverTrigger} from '@/components/ui/popover';
-import {format} from 'date-fns';
-import {cn} from '@/lib/utils';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'; // Import Table components
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import {Icons} from '@/components/icons';
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger} from '@/components/ui/alert-dialog';
 import {Checkbox} from '@/components/ui/checkbox';
@@ -25,7 +26,7 @@ interface EventDetailsProps {
 interface Participant {
   id: string;
   name: string;
-  email: string;
+  email?: string; // Make email optional
   amountOwed: number;
   amountPaid: number;
   paymentDueDate: Date | undefined;
@@ -44,17 +45,13 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
   const router = useRouter();
   const { t } = useTranslation();
 
-  const [participants, setParticipants] = useState<Participant[]>([
-    {id: 'p1', name: 'John Doe', email: 'john.doe@example.com', amountOwed: 10000, amountPaid: 5000, paymentDueDate: new Date('2024-08-10'), isPaid: false},
-    {id: 'p2', name: 'Jane Smith', email: 'jane.smith@example.com', amountOwed: 15000, amountPaid: 15000, paymentDueDate: new Date('2024-08-15'), isPaid: true},
-  ]);
+  // Initialize participants and expenses with empty arrays
+  const [participants, setParticipants] = useState<Participant[]>([]);
   const [newParticipantName, setNewParticipantName] = useState('');
   const [newParticipantEmail, setNewParticipantEmail] = useState('');
   const [newParticipantAmountOwed, setNewParticipantAmountOwed] = useState('');
-  const [expenses, setExpenses] = useState<Expense[]>([
-    {id: 'e1', description: 'Venue Rental', amount: 50000, isPaid: false},
-    {id: 'e2', description: 'Catering', amount: 30000, isPaid: true},
-  ]);
+  // Initialize participants and expenses with empty arrays
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [newExpenseDescription, setNewExpenseDescription] = useState('');
   const [newExpenseAmount, setNewExpenseAmount] = useState('');
   const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
@@ -69,10 +66,13 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
   const balance = totalAmountPaid - totalExpenses;
 
   const handleAddParticipant = () => {
-    if (newParticipantName && newParticipantEmail && newParticipantAmountOwed) {
+    // Only require name and amount owed
+    if (newParticipantName && newParticipantAmountOwed) {
       const newParticipant: Participant = {
         id: `p${participants.length + 1}`,
         name: newParticipantName,
+        // Add email only if provided
+        ...(newParticipantEmail && { email: newParticipantEmail }),
         email: newParticipantEmail,
         amountOwed: parseFloat(newParticipantAmountOwed),
         amountPaid: 0,
@@ -140,12 +140,30 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
     }
   };
 
+  // Handler for changing the amount paid input
+  const handleAmountPaidChange = (participantId: string, value: string) => {
+    const amount = parseFloat(value) || 0; // Convert to number, default to 0 if invalid
+    setParticipants(
+      participants.map(p =>
+        p.id === participantId ? { ...p, amountPaid: amount } : p
+      )
+    );
+  };
 
   const handlePaymentStatusChange = (participantId: string, checked: boolean) => {
     setParticipants(
-      participants.map(p =>
-        p.id === participantId ? {...p, isPaid: checked} : p
-      )
+      participants.map(p => {
+        if (p.id === participantId) {
+          // If checked, set isPaid to true and amountPaid to amountOwed
+          // If unchecked, only set isPaid to false
+          return {
+            ...p,
+            isPaid: checked,
+            amountPaid: checked ? p.amountOwed : p.amountPaid // Auto-fill amountPaid only when checking the box
+          };
+        }
+        return p;
+      })
     );
   };
 
@@ -166,105 +184,192 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
       <div className="flex-1 p-4">
         <Card className="h-full">
           <CardHeader>
-            <CardTitle>Event Details - Event ID: {eventId}</CardTitle>
+            {/* Simplified Card Title */}
+            <CardTitle>{t('Event Details')}</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col h-full">
-            <div className="grid gap-4 mb-4">
-              <div>
-                <h4 className="text-lg font-semibold">{t('Participants')}</h4>
-                <ul className="list-none pl-0">
-                  {participants.map(participant => (
-                    <li key={participant.id} className="py-2 border-b border-border flex items-center justify-between">
-                      <div>
-                        {participant.name} ({participant.email}) - Owed: ¥{participant.amountOwed} - Paid: ¥{participant.amountPaid}
-                        {participant.paymentDueDate && (
-                          <span>
-                            {' '}
-                            - Due Date:{' '}
-                            {format(participant.paymentDueDate, 'MMM dd, yyyy')}
-                          </span>
-                        )}
+          <CardContent className="flex flex-col h-full space-y-6">
+            {/* Participants Section */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>{t('Participants')}</CardTitle>
+                {/* Add Participant Button could go here or below table */}
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('Name')}</TableHead>
+                      <TableHead>{t('Contact')}</TableHead> {/* Changed from Email */}
+                      <TableHead className="text-right">{t('Amount Owed (JPY)')}</TableHead>
+                      <TableHead className="text-right">{t('Amount Paid (JPY)')}</TableHead>
+                      <TableHead>{t('Due Date')}</TableHead>
+                      <TableHead className="text-center">{t('Paid Status')}</TableHead>
+                      <TableHead className="text-right">{t('Actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {participants.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-center text-muted-foreground">{t('No participants added yet.')}</TableCell>
+                      </TableRow>
+                    ) : (
+                      participants.map(participant => (
+                        <TableRow key={participant.id}>
+                          <TableCell>{participant.name}</TableCell>
+                          <TableCell>{participant.email ?? '-'}</TableCell> {/* Display email or dash if undefined */}
+                          <TableCell className="text-right">¥{participant.amountOwed.toLocaleString()}</TableCell>
+                          {/* Amount Paid Input */}
+                          <TableCell className="text-right">
+                             <Input
+                               type="number"
+                               value={participant.amountPaid}
+                               onChange={(e) => handleAmountPaidChange(participant.id, e.target.value)}
+                               className="h-8 w-24 text-right" // Adjust size as needed
+                               min="0" // Prevent negative numbers
+                             />
+                          </TableCell>
+                          <TableCell>
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <Button variant={'outline'} size="sm" className={cn('w-[150px] justify-start text-left font-normal', !participant.paymentDueDate && 'text-muted-foreground')} onClick={() => handleSetPaymentDueDate(participant.id)}>
+                                  <Icons.calendar className="mr-2 h-4 w-4" />
+                                  {participant.paymentDueDate ? format(participant.paymentDueDate, 'PPP') : <span>{t('Pick a date')}</span>}
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent className="w-auto p-0" align="start" side="bottom">
+                                <Calendar mode="single" selected={selectedParticipantId === participant.id ? paymentDueDate : participant.paymentDueDate} onSelect={handleDateSelect} />
+                              </PopoverContent>
+                            </Popover>
+                          </TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              id={`paid-${participant.id}`}
+                              checked={participant.isPaid}
+                              onCheckedChange={(checked) => handlePaymentStatusChange(participant.id, !!checked)}
+                            />
+                          </TableCell>
+                          <TableCell className="text-right space-x-1">
+                             <Button variant="ghost" size="icon" onClick={() => handleDeleteParticipant(participant.id)}>
+                               <Icons.trash className="h-4 w-4" />
+                             </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+                {/* Add Participant Form */}
+                 <div className="mt-4 p-4 border rounded-md">
+                    <h5 className="text-md font-semibold mb-2">{t('Add New Participant')}</h5>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-start"> {/* Use items-start for alignment */}
+                      {/* Name Input (Required) */}
+                      <div className="space-y-1">
+                        <Label htmlFor="new-participant-name">{t('Participant Name')}</Label>
+                        <Input id="new-participant-name" type="text" placeholder={t('Participant Name')} value={newParticipantName} onChange={(e) => setNewParticipantName(e.target.value)} required />
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor={`paid-${participant.id}`} className="mr-2">
-                          {t('Paid:')}
-                        </Label>
-                        <Checkbox
-                          id={`paid-${participant.id}`}
-                          checked={participant.isPaid}
-                          onCheckedChange={(checked) => handlePaymentStatusChange(participant.id, !!checked)}
-                        />
-                        <Popover>
-                          <PopoverTrigger asChild>
-                            <Button variant={'outline'} className={cn('justify-start text-left font-normal', !participant.paymentDueDate && 'text-muted-foreground')} onClick={() => handleSetPaymentDueDate(participant.id)}>
-                              <Icons.calendar className="mr-2 h-4 w-4" />
-                              {participant.paymentDueDate ? format(participant.paymentDueDate, 'MMM dd, yyyy') : <span>{t('Pick a date')}</span>}
+                      {/* Contact Input (Optional) */}
+                      <div className="space-y-1">
+                         <Label htmlFor="new-participant-contact">{t('Participant Contact')} <span className="text-xs text-muted-foreground">{t('Optional')}</span></Label>
+                         <Input id="new-participant-contact" type="text" placeholder={t('Participant Contact')} value={newParticipantEmail} onChange={(e) => setNewParticipantEmail(e.target.value)} />
+                      </div>
+                      {/* Amount Owed Input (Required) */}
+                      <div className="space-y-1">
+                        <Label htmlFor="new-participant-amount">{t('Amount Owed (JPY)')}</Label>
+                        <Input id="new-participant-amount" type="number" placeholder={t('Amount Owed (JPY)')} value={newParticipantAmountOwed} onChange={(e) => setNewParticipantAmountOwed(e.target.value)} required />
+                      </div>
+                      {/* Add Button - aligned with inputs */}
+                      <Button onClick={handleAddParticipant} className="w-full md:w-auto self-end"> {/* Use self-end for alignment */}
+                        <Icons.plusCircle className="mr-2 h-4 w-4" />
+                       {t('Add Participant')}
+                     </Button>
+                   </div>
+                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Separator removed as sections are now in Cards */}
+
+            {/* Expenses Section */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>{t('Expenses')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>{t('Description')}</TableHead>
+                      <TableHead className="text-right">{t('Expense Amount (JPY)')}</TableHead> {/* Use specific key */}
+                      <TableHead className="text-center">{t('Paid Status')}</TableHead>
+                      <TableHead className="text-right">{t('Actions')}</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {expenses.length === 0 ? (
+                       <TableRow>
+                         <TableCell colSpan={4} className="text-center text-muted-foreground">{t('No expenses added yet.')}</TableCell>
+                       </TableRow>
+                    ) : (
+                      expenses.map(expense => (
+                        <TableRow key={expense.id}>
+                          <TableCell>{expense.description}</TableCell>
+                          <TableCell className="text-right">¥{expense.amount.toLocaleString()}</TableCell>
+                          <TableCell className="text-center">
+                            <Checkbox
+                              id={`expense-paid-${expense.id}`}
+                              checked={expense.isPaid}
+                              onCheckedChange={(checked) => handleExpensePaymentStatusChange(expense.id, !!checked)}
+                            />
+                          </TableCell>
+                          <TableCell className="text-right space-x-1">
+                            <Button variant="ghost" size="icon" onClick={() => handleDeleteExpense(expense.id)}>
+                              <Icons.trash className="h-4 w-4" />
                             </Button>
-                          </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0" align="start" side="bottom">
-                            <Calendar mode="single" selected={paymentDueDate} onSelect={handleDateSelect} />
-                          </PopoverContent>
-                        </Popover>
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteParticipant(participant.id)}>
-                          <Icons.trash className="mr-2 h-4 w-4" />
-                          {t('Delete')}
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex space-x-2 mt-2">
-                  <Input type="text" placeholder={t('Participant Name')} value={newParticipantName} onChange={(e) => setNewParticipantName(e.target.value)} />
-                  <Input type="email" placeholder={t('Participant Email')} value={newParticipantEmail} onChange={(e) => setNewParticipantEmail(e.target.value)} />
-                  <Input type="number" placeholder="Amount Owed (JPY)" value={newParticipantAmountOwed} onChange={(e) => setNewParticipantAmountOwed(e.target.value)} />
-                  <Button size="sm" onClick={handleAddParticipant}>{t('Add Participant')}</Button>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+                {/* Add Expense Form */}
+                <div className="mt-4 p-4 border rounded-md">
+                  <h5 className="text-md font-semibold mb-2">{t('Add New Expense')}</h5>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                    <Input type="text" placeholder={t('Expense Description')} value={newExpenseDescription} onChange={(e) => setNewExpenseDescription(e.target.value)} />
+                    <Input type="number" placeholder={t('Expense Amount (JPY)')} value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} />
+                    <Button onClick={handleAddExpense} className="w-full md:w-auto">
+                      <Icons.plusCircle className="mr-2 h-4 w-4" />
+                      {t('Add Expense')}
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              </CardContent>
+            </Card>
 
-              <Separator />
-
-              <div>
-                <h4 className="text-lg font-semibold">{t('Expenses')}</h4>
-                <ul className="list-none pl-0">
-                  {expenses.map(expense => (
-                    <li key={expense.id} className="py-2 border-b border-border flex items-center justify-between">
-                      <div>
-                        {expense.description}: ¥{expense.amount}
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Label htmlFor={`expense-paid-${expense.id}`} className="mr-2">
-                          {t('Paid:')}
-                        </Label>
-                        <Checkbox
-                          id={`expense-paid-${expense.id}`}
-                          checked={expense.isPaid}
-                          onCheckedChange={(checked) => handleExpensePaymentStatusChange(expense.id, !!checked)}
-                        />
-                        <Button variant="destructive" size="sm" onClick={() => handleDeleteExpense(expense.id)}>
-                          <Icons.trash className="mr-2 h-4 w-4" />
-                          {t('Delete')}
-                        </Button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex space-x-2 mt-2">
-                  <Input type="text" placeholder={t('Expense Description')} value={newExpenseDescription} onChange={(e) => setNewExpenseDescription(e.target.value)} />
-                  <Input type="number" placeholder={t('Expense Amount')} value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} />
-                  <Button size="sm" onClick={handleAddExpense}>{t('Add Expense')}</Button>
+            {/* Financial Overview Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('Financial Overview')}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{t('Total Amount Paid')}</span>
+                  <span className="font-medium">¥{totalAmountPaid.toLocaleString()}</span>
                 </div>
-              </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">{t('Total Expenses')}</span>
+                  <span className="font-medium">¥{totalExpenses.toLocaleString()}</span>
+                </div>
+                <Separator />
+                <div className="flex justify-between items-center font-semibold text-lg">
+                  <span>{t('Balance')}</span>
+                  <span>¥{balance.toLocaleString()}</span>
+                </div>
+              </CardContent>
+            </Card>
 
-              <Separator />
-
-              <div>
-                <h4 className="text-lg font-semibold">{t('Financial Overview')}</h4>
-                <p>{t('Total Amount Paid')}: ¥{totalAmountPaid}</p>
-                <p>Total Expenses: ¥{totalExpenses}</p>
-                <p>Balance: ¥{balance}</p>
-              </div>
-            </div>
           </CardContent>
+          {/* Card Footer might not be needed if content fills height */}
         </Card>
       </div>
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>

@@ -20,15 +20,35 @@ import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
 import useTranslation from '@/hooks/use-translation';
 
-const eventsData = [
+// Define the Event type (consider moving to a shared types file)
+interface Event {
+  id: string;
+  name: string;
+  date: string; // Keep as string for simplicity, or use Date
+  description: string;
+}
+
+const initialEventsData: Event[] = [
   { id: '1', name: 'Summer Party', date: '2024-08-15', description: 'Annual summer party' },
   { id: '2', name: 'Trip to Mountains', date: '2024-12-20', description: 'Winter trip to the mountains' },
 ];
 
 export default function Home() {
+  const [events, setEvents] = useState<Event[]>(initialEventsData); // Manage events in state
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const router = useRouter();
   const { t } = useTranslation();
+
+  // Function to add a new event
+  const addEvent = (newEvent: Omit<Event, 'id' | 'date'>) => {
+    const eventWithId: Event = {
+      ...newEvent,
+      id: String(Date.now()), // Simple ID generation
+      date: new Date().toISOString().split('T')[0], // Set current date as default
+    };
+    setEvents((prevEvents) => [...prevEvents, eventWithId]);
+  };
+
 
   return (
     <SidebarProvider>
@@ -61,18 +81,16 @@ export default function Home() {
           </SidebarFooter>
         </Sidebar>
 
-        <div className="flex-1 p-4">
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Events</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <EventList events={eventsData} />
-            </CardContent>
-          </Card>
+        <div className="flex-1 p-4 space-y-4">
+          <h2 className="text-2xl font-bold tracking-tight">{t('Events')}</h2>
+          <EventList events={events} /> {/* Pass state variable */}
         </div>
 
-        <EventCreateDialog open={isCreateEventOpen} onOpenChange={setIsCreateEventOpen} />
+        <EventCreateDialog
+          open={isCreateEventOpen}
+          onOpenChange={setIsCreateEventOpen}
+          onEventCreated={addEvent} // Pass the addEvent function
+        />
       </div>
     </SidebarProvider>
   );
