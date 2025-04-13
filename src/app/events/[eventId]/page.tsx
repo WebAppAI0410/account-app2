@@ -13,6 +13,7 @@ import {format} from 'date-fns';
 import {cn} from '@/lib/utils';
 import {Icons} from '@/components/icons';
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogTrigger} from '@/components/ui/alert-dialog';
+import {Checkbox} from '@/components/ui/checkbox';
 
 interface EventDetailsProps {
   params: {
@@ -26,6 +27,7 @@ interface Participant {
   email: string;
   amountPaid: number;
   paymentDueDate: Date | undefined;
+  isPaid: boolean;
 }
 
 const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
@@ -33,8 +35,8 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
   const router = useRouter();
 
   const [participants, setParticipants] = useState<Participant[]>([
-    {id: 'p1', name: 'John Doe', email: 'john.doe@example.com', amountPaid: 50, paymentDueDate: new Date('2024-08-10')},
-    {id: 'p2', name: 'Jane Smith', email: 'jane.smith@example.com', amountPaid: 75, paymentDueDate: new Date('2024-08-15')},
+    {id: 'p1', name: 'John Doe', email: 'john.doe@example.com', amountPaid: 50, paymentDueDate: new Date('2024-08-10'), isPaid: false},
+    {id: 'p2', name: 'Jane Smith', email: 'jane.smith@example.com', amountPaid: 75, paymentDueDate: new Date('2024-08-15'), isPaid: true},
   ]);
   const [newParticipantName, setNewParticipantName] = useState('');
   const [newParticipantEmail, setNewParticipantEmail] = useState('');
@@ -48,7 +50,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
   const [paymentDueDate, setPaymentDueDate] = useState<Date | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
-  const totalAmountPaid = participants.reduce((sum, participant) => sum + participant.amountPaid, 0);
+  const totalAmountPaid = participants.reduce((sum, participant) => sum + (participant.isPaid ? participant.amountPaid : 0), 0);
   const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
   const balance = totalAmountPaid - totalExpenses;
 
@@ -60,6 +62,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
         email: newParticipantEmail,
         amountPaid: 0,
         paymentDueDate: undefined,
+        isPaid: false,
       };
       setParticipants([...participants, newParticipant]);
       setNewParticipantName('');
@@ -107,6 +110,14 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
     }
   };
 
+  const handlePaymentStatusChange = (participantId: string, checked: boolean) => {
+    setParticipants(
+      participants.map(p =>
+        p.id === participantId ? {...p, isPaid: checked} : p
+      )
+    );
+  };
+
   return (
     <div className="flex flex-col h-screen">
       <div className="p-4">
@@ -136,6 +147,14 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
                         )}
                       </div>
                       <div className="flex items-center space-x-2">
+                        <Label htmlFor={`paid-${participant.id}`} className="mr-2">
+                          Paid:
+                        </Label>
+                        <Checkbox
+                          id={`paid-${participant.id}`}
+                          checked={participant.isPaid}
+                          onCheckedChange={(checked) => handlePaymentStatusChange(participant.id, !!checked)}
+                        />
                         <Popover>
                           <PopoverTrigger asChild>
                             <Button variant={'outline'} className={cn('justify-start text-left font-normal', !participant.paymentDueDate && 'text-muted-foreground')} onClick={() => handleSetPaymentDueDate(participant.id)}>
