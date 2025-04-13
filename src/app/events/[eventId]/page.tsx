@@ -177,29 +177,30 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
 
   return (
     <div className="flex flex-col h-screen">
+      {/* Back Button */}
       <div className="p-4">
         <Button onClick={() => router.back()}>{t('Back to Events')}</Button>
       </div>
 
+      {/* Main Content */}
       <div className="flex-1 p-4">
         <Card className="h-full">
           <CardHeader>
-            {/* Simplified Card Title */}
             <CardTitle>{t('Event Details')}</CardTitle>
           </CardHeader>
-          <CardContent className="flex flex-col h-full space-y-6">
+          <CardContent className="flex flex-col h-full space-y-4">
+
             {/* Participants Section */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+            <section className="space-y-2">
+              <CardHeader className="px-0">
                 <CardTitle>{t('Participants')}</CardTitle>
-                {/* Add Participant Button could go here or below table */}
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('Name')}</TableHead>
-                      <TableHead>{t('Contact')}</TableHead> {/* Changed from Email */}
+                      <TableHead>{t('Contact')}</TableHead>
                       <TableHead className="text-right">{t('Amount Owed (JPY)')}</TableHead>
                       <TableHead className="text-right">{t('Amount Paid (JPY)')}</TableHead>
                       <TableHead>{t('Due Date')}</TableHead>
@@ -216,9 +217,8 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
                       participants.map(participant => (
                         <TableRow key={participant.id}>
                           <TableCell>{participant.name}</TableCell>
-                          <TableCell>{participant.email ?? '-'}</TableCell> {/* Display email or dash if undefined */}
+                          <TableCell>{participant.email ?? '-'}</TableCell>
                           <TableCell className="text-right">¥{participant.amountOwed.toLocaleString()}</TableCell>
-                          {/* Amount Paid Input */}
                           <TableCell className="text-right">
                              <Input
                                type="number"
@@ -258,10 +258,11 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
                     )}
                   </TableBody>
                 </Table>
+                </CardContent>
+              <Card className="mt-4">
+                <CardContent>
                 {/* Add Participant Form */}
-                 <div className="mt-4 p-4 border rounded-md">
-                    <h5 className="text-md font-semibold mb-2">{t('Add New Participant')}</h5>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-2 items-start"> {/* Use items-start for alignment */}
+                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                       {/* Name Input (Required) */}
                       <div className="space-y-1">
                         <Label htmlFor="new-participant-name">{t('Participant Name')}</Label>
@@ -278,28 +279,28 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
                         <Input id="new-participant-amount" type="number" placeholder={t('Amount Owed (JPY)')} value={newParticipantAmountOwed} onChange={(e) => setNewParticipantAmountOwed(e.target.value)} required />
                       </div>
                       {/* Add Button - aligned with inputs */}
-                      <Button onClick={handleAddParticipant} className="w-full md:w-auto self-end"> {/* Use self-end for alignment */}
+                      <Button onClick={handleAddParticipant} className="w-full md:w-auto">
                         <Icons.plusCircle className="mr-2 h-4 w-4" />
                        {t('Add Participant')}
                      </Button>
                    </div>
-                 </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                 </Card>
+            </section>
 
-            {/* Separator removed as sections are now in Cards */}
+            <Separator />
 
             {/* Expenses Section */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+            <section className="space-y-2">
+              <CardHeader className="px-0">
                 <CardTitle>{t('Expenses')}</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <Table>
                   <TableHeader>
                     <TableRow>
                       <TableHead>{t('Description')}</TableHead>
-                      <TableHead className="text-right">{t('Expense Amount (JPY)')}</TableHead> {/* Use specific key */}
+                      <TableHead className="text-right">{t('Expense Amount (JPY)')}</TableHead>
                       <TableHead className="text-center">{t('Paid Status')}</TableHead>
                       <TableHead className="text-right">{t('Actions')}</TableHead>
                     </TableRow>
@@ -331,24 +332,33 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
                     )}
                   </TableBody>
                 </Table>
+                 </CardContent>
+              <Card className="mt-4">
+                <CardContent>
                 {/* Add Expense Form */}
-                <div className="mt-4 p-4 border rounded-md">
-                  <h5 className="text-md font-semibold mb-2">{t('Add New Expense')}</h5>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                    <Input type="text" placeholder={t('Expense Description')} value={newExpenseDescription} onChange={(e) => setNewExpenseDescription(e.target.value)} />
-                    <Input type="number" placeholder={t('Expense Amount (JPY)')} value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div className="space-y-1">
+                      <Label htmlFor="new-expense-description">{t('Description')}</Label>
+                      <Input id="new-expense-description" type="text" placeholder={t('Expense Description')} value={newExpenseDescription} onChange={(e) => setNewExpenseDescription(e.target.value)} />
+                    </div>
+                   <div className="space-y-1">
+                      <Label htmlFor="new-expense-amount">{t('Expense Amount (JPY)')}</Label>
+                      <Input id="new-expense-amount" type="number" placeholder={t('Expense Amount (JPY)')} value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} />
+                   </div>
                     <Button onClick={handleAddExpense} className="w-full md:w-auto">
                       <Icons.plusCircle className="mr-2 h-4 w-4" />
                       {t('Add Expense')}
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </section>
+
+            <Separator />
 
             {/* Financial Overview Section */}
-            <Card>
-              <CardHeader>
+            <section className="space-y-2">
+              <CardHeader className="px-0">
                 <CardTitle>{t('Financial Overview')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
@@ -366,31 +376,33 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
                   <span>¥{balance.toLocaleString()}</span>
                 </div>
               </CardContent>
-            </Card>
+            </section>
 
           </CardContent>
-          {/* Card Footer might not be needed if content fills height */}
         </Card>
       </div>
+
+      {/* Delete Confirmation Dialog for Participants */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
-          <AlertDialogTitle>Delete Participant</AlertDialogTitle>
+          <AlertDialogTitle>{t('Delete Participant')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this participant?
+            {t('Are you sure you want to delete this participant?')}
           </AlertDialogDescription>
-          <AlertDialogAction onClick={confirmDeleteParticipant}>Confirm</AlertDialogAction>
-          <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmDeleteParticipant}>{t('Confirm')}</AlertDialogAction>
+          <AlertDialogCancel onClick={() => setIsDeleteDialogOpen(false)}>{t('Cancel')}</AlertDialogCancel>
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Delete Confirmation Dialog for Expenses */}
       <AlertDialog open={isExpenseDeleteDialogOpen} onOpenChange={setIsExpenseDeleteDialogOpen}>
         <AlertDialogContent>
-          <AlertDialogTitle>Delete Expense</AlertDialogTitle>
+          <AlertDialogTitle>{t('Delete Expense')}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete this expense?
+            {t('Are you sure you want to delete this expense?')}
           </AlertDialogDescription>
-          <AlertDialogAction onClick={confirmDeleteExpense}>Confirm</AlertDialogAction>
-          <AlertDialogCancel onClick={() => setIsExpenseDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={confirmDeleteExpense}>{t('Confirm')}</AlertDialogAction>
+          <AlertDialogCancel onClick={() => setIsExpenseDeleteDialogOpen(false)}>{t('Cancel')}</AlertDialogCancel>
         </AlertDialogContent>
       </AlertDialog>
     </div>
