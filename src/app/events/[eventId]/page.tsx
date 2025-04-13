@@ -1,7 +1,6 @@
-
 'use client';
 
-import React, {useState} from 'react';
+import React, {useState, useEffect} from 'react';
 import {useRouter} from 'next/navigation';
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
@@ -63,10 +62,33 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
   const [isExpenseDeleteDialogOpen, setIsExpenseDeleteDialogOpen] = useState(false);
   const [isAddParticipantDialogOpen, setIsAddParticipantDialogOpen] = useState(false); // State for Add Participant Dialog
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false); // State for Add Expense Dialog
+  const [amountPaidManually, setAmountPaidManually] = useState({});
+
+  const handleAmountPaidChange = (participantId: string, value: string) => {
+    setAmountPaidManually({...amountPaidManually, [participantId]: value});
+  };
+
+  useEffect(() => {
+    // Update participants' amountPaid only when isPaid is true
+    setParticipants(prevParticipants =>
+      prevParticipants.map(p => {
+        if (p.isPaid && amountPaidManually[p.id] !== undefined) {
+          return {...p, amountPaid: parseFloat(amountPaidManually[p.id]) || 0};
+        }
+        return p;
+      })
+    );
+  }, [amountPaidManually]);
 
   const totalAmountPaid = participants.reduce((sum, participant) => sum + (participant.isPaid ? participant.amountPaid : 0), 0);
   const totalAmountOwed = participants.reduce((sum, participant) => sum + participant.amountOwed, 0);
-  const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+
+  const calculateTotalExpenses = () => {
+    return expenses.reduce((sum, expense) => sum + (expense.isPaid ? expense.amount : 0), 0);
+  };
+
+  const [totalExpenses, setTotalExpenses] = useState(calculateTotalExpenses());
+
   const balance = totalAmountPaid - totalExpenses;
 
   const handleAddParticipant = () => {
@@ -103,6 +125,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
       setNewExpenseDescription('');
       setNewExpenseAmount('');
       setIsAddExpenseDialogOpen(false); // Close dialog on success
+      setTotalExpenses(calculateTotalExpenses());
     }
   };
 
@@ -143,17 +166,8 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
       setExpenses(expenses.filter(e => e.id !== selectedExpenseId));
       setIsExpenseDeleteDialogOpen(false);
       setSelectedExpenseId(null);
+      setTotalExpenses(calculateTotalExpenses());
     }
-  };
-
-  // Handler for changing the amount paid input
-  const handleAmountPaidChange = (participantId: string, value: string) => {
-    const amount = parseFloat(value) || 0; // Convert to number, default to 0 if invalid
-    setParticipants(
-      participants.map(p =>
-        p.id === participantId ? { ...p, amountPaid: amount } : p
-      )
-    );
   };
 
   const handlePaymentStatusChange = (participantId: string, checked: boolean) => {
@@ -165,7 +179,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
           return {
             ...p,
             isPaid: checked,
-            amountPaid: checked ? p.amountOwed : p.amountPaid // Auto-fill amountPaid only when checking the box
+            amountPaid: checked ? parseFloat(amountPaidManually[p.id]) || p.amountOwed : 0 // Auto-fill amountPaid only when checking the box
           };
         }
         return p;
@@ -175,10 +189,14 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
 
   const handleExpensePaymentStatusChange = (expenseId: string, checked: boolean) => {
     setExpenses(
-      expenses.map(e =>
-        e.id === expenseId ? {...e, isPaid: checked} : e
-      )
+      expenses.map(e => {
+        if (e.id === expenseId) {
+          return {...e, isPaid: checked};
+        }
+        return e;
+      })
     );
+    setTotalExpenses(calculateTotalExpenses());
   };
 
   return (
@@ -262,10 +280,10 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
                           <TableCell>{participant.name}</TableCell>
                           <TableCell>{participant.email ?? '-'}</TableCell>
                           <TableCell className="text-right">¥{participant.amountOwed.toLocaleString()}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right flex justify-end"> {/* Added flex justify-end */}
                              <Input
                                type="number"
-                               value={participant.amountPaid}
+                               value={amountPaidManually[participant.id] || ''}
                                onChange={(e) => handleAmountPaidChange(participant.id, e.target.value)}
                                className="h-8 w-24 text-right" // Adjust size as needed
                                min="0" // Prevent negative numbers
@@ -439,7 +457,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
             {t('Are you sure you want to delete this expense?')}
           </AlertDialogDescription>
           <AlertDialogAction onClick={confirmDeleteExpense}>{t('Confirm')}</AlertDialogAction>
-          <AlertDialogCancel onClick={() => setIsExpenseDeleteDialogOpen(false)}>{t('Cancel')}</AlertDialogCancel>
+          <AlertDialogCancel onClick={() => setIsExpenseDeleteDialogOpen(false)}>{t('Cancel')}</AlertDialogContent>
         </AlertDialogContent>
       </AlertDialog>
     </div>
