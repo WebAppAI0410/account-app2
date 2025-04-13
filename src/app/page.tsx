@@ -18,6 +18,7 @@ import { EventList } from '@/components/EventList';
 import { EventCreateDialog } from '@/components/EventCreateDialog';
 import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
+import useTranslation from '@/hooks/use-translation';
 
 const eventsData = [
   { id: '1', name: 'Summer Party', date: '2024-08-15', description: 'Annual summer party' },
@@ -27,6 +28,7 @@ const eventsData = [
 export default function Home() {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const router = useRouter();
+  const { t } = useTranslation();
 
   return (
     <SidebarProvider>
@@ -35,7 +37,7 @@ export default function Home() {
           <SidebarHeader>
             <div className="flex items-center space-x-2">
               <Icons.coins className="h-6 w-6" />
-              <h4 className="font-semibold text-md">EventBalance</h4>
+              <h4 className="font-semibold text-md">{t('EventBalance')}</h4>
             </div>
           </SidebarHeader>
           <SidebarContent>
@@ -43,7 +45,7 @@ export default function Home() {
               <SidebarMenuItem>
                 <SidebarTrigger>
                   <Icons.list className="mr-2 h-4 w-4" />
-                  <span>Events</span>
+                  <span>{t('Events')}</span>
                 </SidebarTrigger>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -53,7 +55,7 @@ export default function Home() {
             <div className="p-2">
               <Button variant="secondary" onClick={() => setIsCreateEventOpen(true)} className="w-full">
                 <Icons.plus className="mr-2 h-4 w-4" />
-                Create Event
+                {t('Create Event')}
               </Button>
             </div>
           </SidebarFooter>

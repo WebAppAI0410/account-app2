@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import {
   AlertDialog,
@@ -12,6 +11,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import useTranslation from '@/hooks/use-translation';
 
 interface EventCreateDialogProps {
   open: boolean;
@@ -21,6 +21,7 @@ interface EventCreateDialogProps {
 export const EventCreateDialog: React.FC<EventCreateDialogProps> = ({ open, onOpenChange }) => {
   const [eventName, setEventName] = useState('');
   const [eventDescription, setEventDescription] = useState('');
+  const { t } = useTranslation();
 
   const handleCreateEvent = () => {
     // Add event creation logic here
@@ -32,26 +33,26 @@ export const EventCreateDialog: React.FC<EventCreateDialogProps> = ({ open, onOp
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogTrigger asChild>
         {/* This trigger is not visible, it's triggered from the parent component */}
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogTitle>Create New Event</AlertDialogTitle>
-        <AlertDialogDescription>Enter the details for the new event.</AlertDialogDescription>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Event Name</Label>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogTitle>Create New Event</AlertDialogTitle>
+          <AlertDialogDescription>{t('Enter the details for the new event.')}</AlertDialogDescription>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+            <Label htmlFor="name">{t('Event Name')}</Label>
             <Input
               id="name"
-              placeholder="Event name"
+              placeholder={t('Event name')}
               value={eventName}
               onChange={(e) => setEventName(e.target.value)}
               className="col-span-3"
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="description">Event Description</Label>
+            <Label htmlFor="description">{t('Event Description')}</Label>
             <Textarea
               id="description"
-              placeholder="Event description"
+              placeholder={t('Event description')}
               value={eventDescription}
               onChange={(e) => setEventDescription(e.target.value)}
               className="col-span-3"
