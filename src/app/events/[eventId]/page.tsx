@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, {useState} from 'react';
@@ -9,7 +10,8 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'; // Import Table components
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription, DialogClose } from '@/components/ui/dialog'; // Import Dialog components
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import {Icons} from '@/components/icons';
@@ -59,6 +61,8 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
   const [paymentDueDate, setPaymentDueDate] = useState<Date | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isExpenseDeleteDialogOpen, setIsExpenseDeleteDialogOpen] = useState(false);
+  const [isAddParticipantDialogOpen, setIsAddParticipantDialogOpen] = useState(false); // State for Add Participant Dialog
+  const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false); // State for Add Expense Dialog
 
   const totalAmountPaid = participants.reduce((sum, participant) => sum + (participant.isPaid ? participant.amountPaid : 0), 0);
   const totalAmountOwed = participants.reduce((sum, participant) => sum + participant.amountOwed, 0);
@@ -83,6 +87,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
       setNewParticipantName('');
       setNewParticipantEmail('');
       setNewParticipantAmountOwed('');
+      setIsAddParticipantDialogOpen(false); // Close dialog on success
     }
   };
 
@@ -97,6 +102,7 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
       setExpenses([...expenses, newExpense]);
       setNewExpenseDescription('');
       setNewExpenseAmount('');
+      setIsAddExpenseDialogOpen(false); // Close dialog on success
     }
   };
 
@@ -191,13 +197,50 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
           <CardContent className="flex flex-col h-full space-y-4">
 
             {/* Participants Section */}
-            <section className="space-y-2">
-              <CardHeader className="px-0">
-                <CardTitle>{t('Participants')}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
+            <section className="space-y-4"> {/* Increased spacing */}
+              <div className="flex justify-between items-center"> {/* Header with Add Button */}
+                <h3 className="text-lg font-semibold">{t('Participants')}</h3>
+                <Dialog open={isAddParticipantDialogOpen} onOpenChange={setIsAddParticipantDialogOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="sm">
+                      <Icons.plusCircle className="mr-2 h-4 w-4" />
+                      {t('Add Participant')}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{t('Add New Participant')}</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      {/* Name Input (Required) */}
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="new-participant-name" className="text-right">{t('Name')}</Label>
+                        <Input id="new-participant-name" type="text" placeholder={t('Participant Name')} value={newParticipantName} onChange={(e) => setNewParticipantName(e.target.value)} required className="col-span-3" />
+                      </div>
+                      {/* Contact Input (Optional) */}
+                      <div className="grid grid-cols-4 items-center gap-4">
+                         <Label htmlFor="new-participant-contact" className="text-right">{t('Contact')} <span className="text-xs text-muted-foreground">({t('Optional')})</span></Label>
+                         <Input id="new-participant-contact" type="text" placeholder={t('Participant Contact')} value={newParticipantEmail} onChange={(e) => setNewParticipantEmail(e.target.value)} className="col-span-3" />
+                      </div>
+                      {/* Amount Owed Input (Required) */}
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="new-participant-amount" className="text-right">{t('Amount Owed (JPY)')}</Label>
+                        <Input id="new-participant-amount" type="number" placeholder={t('Amount Owed (JPY)')} value={newParticipantAmountOwed} onChange={(e) => setNewParticipantAmountOwed(e.target.value)} required className="col-span-3" />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                         <Button variant="outline">{t('Cancel')}</Button>
+                      </DialogClose>
+                      <Button onClick={handleAddParticipant}>{t('Add Participant')}</Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+              </div>
+              <Card> {/* Wrap table in Card for better visual grouping */}
+                <CardContent className="p-0"> {/* Remove Card padding for table */}
+                  <Table>
+                    <TableHeader>
                     <TableRow>
                       <TableHead>{t('Name')}</TableHead>
                       <TableHead>{t('Contact')}</TableHead>
@@ -256,48 +299,54 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
                         </TableRow>
                       ))
                     )}
-                  </TableBody>
-                </Table>
+                    </TableBody>
+                  </Table>
                 </CardContent>
-              <Card className="mt-4">
-                <CardContent>
-                {/* Add Participant Form */}
-                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                      {/* Name Input (Required) */}
-                      <div className="space-y-1">
-                        <Label htmlFor="new-participant-name">{t('Participant Name')}</Label>
-                        <Input id="new-participant-name" type="text" placeholder={t('Participant Name')} value={newParticipantName} onChange={(e) => setNewParticipantName(e.target.value)} required />
-                      </div>
-                      {/* Contact Input (Optional) */}
-                      <div className="space-y-1">
-                         <Label htmlFor="new-participant-contact">{t('Participant Contact')} <span className="text-xs text-muted-foreground">{t('Optional')}</span></Label>
-                         <Input id="new-participant-contact" type="text" placeholder={t('Participant Contact')} value={newParticipantEmail} onChange={(e) => setNewParticipantEmail(e.target.value)} />
-                      </div>
-                      {/* Amount Owed Input (Required) */}
-                      <div className="space-y-1">
-                        <Label htmlFor="new-participant-amount">{t('Amount Owed (JPY)')}</Label>
-                        <Input id="new-participant-amount" type="number" placeholder={t('Amount Owed (JPY)')} value={newParticipantAmountOwed} onChange={(e) => setNewParticipantAmountOwed(e.target.value)} required />
-                      </div>
-                      {/* Add Button - aligned with inputs */}
-                      <Button onClick={handleAddParticipant} className="w-full md:w-auto">
-                        <Icons.plusCircle className="mr-2 h-4 w-4" />
-                       {t('Add Participant')}
-                     </Button>
-                   </div>
-                  </CardContent>
-                 </Card>
+              </Card>
             </section>
 
             <Separator />
 
             {/* Expenses Section */}
-            <section className="space-y-2">
-              <CardHeader className="px-0">
-                <CardTitle>{t('Expenses')}</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
+            <section className="space-y-4"> {/* Increased spacing */}
+               <div className="flex justify-between items-center"> {/* Header with Add Button */}
+                 <h3 className="text-lg font-semibold">{t('Expenses')}</h3>
+                 <Dialog open={isAddExpenseDialogOpen} onOpenChange={setIsAddExpenseDialogOpen}>
+                   <DialogTrigger asChild>
+                     <Button size="sm">
+                       <Icons.plusCircle className="mr-2 h-4 w-4" />
+                       {t('Add Expense')}
+                     </Button>
+                   </DialogTrigger>
+                   <DialogContent>
+                     <DialogHeader>
+                       <DialogTitle>{t('Add New Expense')}</DialogTitle>
+                     </DialogHeader>
+                     <div className="grid gap-4 py-4">
+                       {/* Description Input */}
+                       <div className="grid grid-cols-4 items-center gap-4">
+                         <Label htmlFor="new-expense-description" className="text-right">{t('Description')}</Label>
+                         <Input id="new-expense-description" type="text" placeholder={t('Expense Description')} value={newExpenseDescription} onChange={(e) => setNewExpenseDescription(e.target.value)} className="col-span-3" />
+                       </div>
+                        {/* Amount Input */}
+                       <div className="grid grid-cols-4 items-center gap-4">
+                         <Label htmlFor="new-expense-amount" className="text-right">{t('Expense Amount (JPY)')}</Label> {/* Changed key */}
+                         <Input id="new-expense-amount" type="number" placeholder={t('Expense Amount (JPY)')} value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} className="col-span-3" />
+                       </div>
+                     </div>
+                     <DialogFooter>
+                       <DialogClose asChild>
+                          <Button variant="outline">{t('Cancel')}</Button>
+                       </DialogClose>
+                       <Button onClick={handleAddExpense}>{t('Add Expense')}</Button>
+                     </DialogFooter>
+                   </DialogContent>
+                 </Dialog>
+               </div>
+               <Card> {/* Wrap table in Card */}
+                 <CardContent className="p-0"> {/* Remove Card padding */}
+                   <Table>
+                     <TableHeader>
                     <TableRow>
                       <TableHead>{t('Description')}</TableHead>
                       <TableHead className="text-right">{t('Expense Amount (JPY)')}</TableHead>
@@ -330,52 +379,40 @@ const EventDetails: React.FC<EventDetailsProps> = ({params}) => {
                         </TableRow>
                       ))
                     )}
-                  </TableBody>
-                </Table>
+                     </TableBody>
+                   </Table>
                  </CardContent>
-              <Card className="mt-4">
-                <CardContent>
-                {/* Add Expense Form */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                  <div className="space-y-1">
-                      <Label htmlFor="new-expense-description">{t('Description')}</Label>
-                      <Input id="new-expense-description" type="text" placeholder={t('Expense Description')} value={newExpenseDescription} onChange={(e) => setNewExpenseDescription(e.target.value)} />
-                    </div>
-                   <div className="space-y-1">
-                      <Label htmlFor="new-expense-amount">{t('Expense Amount (JPY)')}</Label>
-                      <Input id="new-expense-amount" type="number" placeholder={t('Expense Amount (JPY)')} value={newExpenseAmount} onChange={(e) => setNewExpenseAmount(e.target.value)} />
-                   </div>
-                    <Button onClick={handleAddExpense} className="w-full md:w-auto">
-                      <Icons.plusCircle className="mr-2 h-4 w-4" />
-                      {t('Add Expense')}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+               </Card>
             </section>
 
             <Separator />
 
             {/* Financial Overview Section */}
-            <section className="space-y-2">
-              <CardHeader className="px-0">
-                <CardTitle>{t('Financial Overview')}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">{t('Total Amount Paid')}</span>
-                  <span className="font-medium">¥{totalAmountPaid.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">{t('Total Expenses')}</span>
-                  <span className="font-medium">¥{totalExpenses.toLocaleString()}</span>
-                </div>
-                <Separator />
-                <div className="flex justify-between items-center font-semibold text-lg">
-                  <span>{t('Balance')}</span>
-                  <span>¥{balance.toLocaleString()}</span>
-                </div>
-              </CardContent>
+            <section className="space-y-4"> {/* Increased spacing */}
+              <h3 className="text-lg font-semibold">{t('Financial Overview')}</h3>
+              <Card> {/* Wrap overview in Card */}
+                <CardContent className="space-y-3 pt-4"> {/* Add padding top */}
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">{t('Total Amount Paid')}</span>
+                    <span className="font-medium">¥{totalAmountPaid.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">{t('Total Amount Owed (All Participants)')}</span> {/* Added Total Owed */}
+                    <span className="font-medium">¥{totalAmountOwed.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-muted-foreground">{t('Total Expenses')}</span>
+                    <span className="font-medium">¥{totalExpenses.toLocaleString()}</span>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between items-center font-semibold text-lg">
+                    <span>{t('Balance')}</span>
+                    <span className={cn(balance >= 0 ? 'text-green-600' : 'text-red-600')}> {/* Conditional color */}
+                      ¥{balance.toLocaleString()}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
             </section>
 
           </CardContent>

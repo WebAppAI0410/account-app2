@@ -22,7 +22,7 @@
   "Event description": "イベントの説明",
   "Close": "閉じる",
   "Enter the details for the new event.": "新しいイベントの詳細を入力してください。",
-  "Amount Owed (JPY)": "借用金額 (JPY)",
+  "Amount Owed (JPY)": "請求額 (円)",
   "Total Expenses": "合計費用",
   "Date not set": "日付未設定",
   "View Details": "詳細を見る",
@@ -32,7 +32,6 @@
   "Event Details": "イベント詳細",
   "Name": "名前",
   "Contact": "連絡先",
-  "Amount Owed (JPY)": "請求額 (円)",
   "Amount Paid (JPY)": "支払額 (円)",
   "Due Date": "支払期日",
   "Paid Status": "支払状況",
@@ -44,5 +43,11 @@
   "Balance": "残高",
   "Description": "内容",
   "No expenses added yet.": "まだ費用が追加されていません。",
-  "Optional": "(任意)"
+  "Optional": "(任意)",
+  "Total Amount Owed (All Participants)": "参加者全員の請求総額 (円)",
+  "Delete Participant": "参加者を削除",
+  "Are you sure you want to delete this participant?": "この参加者を削除してもよろしいですか？",
+  "Confirm": "確認",
+  "Delete Expense": "費用を削除",
+  "Are you sure you want to delete this expense?": "この費用を削除してもよろしいですか？"
 }
