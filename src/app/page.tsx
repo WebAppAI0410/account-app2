@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useState } from 'react';
@@ -18,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { EventList } from '@/components/EventList';
 import { EventCreateDialog } from '@/components/EventCreateDialog';
 import { Separator } from '@/components/ui/separator';
+import { useRouter } from 'next/navigation';
 
 const eventsData = [
   { id: '1', name: 'Summer Party', date: '2024-08-15', description: 'Annual summer party' },
@@ -26,6 +26,7 @@ const eventsData = [
 
 export default function Home() {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <SidebarProvider>

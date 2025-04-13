@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
@@ -6,6 +5,7 @@ import { Calendar } from '@/components/ui/calendar';
 import { format } from 'date-fns';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 
 interface Event {
   id: string;
@@ -19,6 +19,12 @@ interface EventListProps {
 }
 
 export const EventList: React.FC<EventListProps> = ({ events }) => {
+  const router = useRouter();
+
+  const handleViewDetails = (eventId: string) => {
+    router.push(`/events/${eventId}`);
+  };
+
   return (
     <div className="divide-y divide-border">
       {events.map((event) => (
@@ -39,7 +45,7 @@ export const EventList: React.FC<EventListProps> = ({ events }) => {
                 <Calendar mode="single" selected={event.date ? new Date(event.date) : undefined} onSelect={() => {}} />
               </PopoverContent>
             </Popover>
-            <Button>View Details</Button>
+            <Button onClick={() => handleViewDetails(event.id)}>View Details</Button>
           </div>
         </div>
       ))}
