@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState } from 'react'; // Keep useState for local dialog state
+import { useEvents } from '@/context/EventsContext'; // Import the context hook
 import {
   Sidebar,
   SidebarContent,
@@ -26,27 +27,47 @@ interface Event {
   name: string;
   date: string; // Keep as string for simplicity, or use Date
   description: string;
+  collectionStartDate?: string; // Add collection start date (optional)
+  collectionEndDate?: string;   // Add collection end date (optional)
 }
 
-const initialEventsData: Event[] = [
-  { id: '1', name: 'Summer Party', date: '2024-08-15', description: 'Annual summer party' },
-  { id: '2', name: 'Trip to Mountains', date: '2024-12-20', description: 'Winter trip to the mountains' },
-];
+// Define the type for the data coming from the dialog
+// Use string for dates to match the data from EventCreateDialog
+interface NewEventFormData {
+  name: string;
+  description: string;
+  collectionStartDate?: string; 
+  collectionEndDate?: string;   
+}
+
+// Remove local state management for events and related functions
+// const formatSimpleDate = ... (moved to context)
+// const initialEventsData = ... (moved to context)
 
 export default function Home() {
-  const [events, setEvents] = useState<Event[]>(initialEventsData); // Manage events in state
+  // Get events state and functions from context
+  const { events, setEvents, addEvent, deleteEvent } = useEvents();
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const router = useRouter();
   const { t } = useTranslation();
 
-  // Function to add a new event
-  const addEvent = (newEvent: Omit<Event, 'id' | 'date'>) => {
-    const eventWithId: Event = {
-      ...newEvent,
-      id: String(Date.now()), // Simple ID generation
-      date: new Date().toISOString().split('T')[0], // Set current date as default
+  // Function to handle reordering (uses setEvents from context)
+  const handleReorderEvents = (reorderedEvents: Event[]) => {
+    setEvents(reorderedEvents); // Directly use setEvents from context
+  };
+
+  // Adapt the onEventCreated prop for EventCreateDialog
+  const handleCreateEvent = (newEventData: NewEventFormData) => {
+    // Prepare the event data, letting the context addEvent handle id and default date
+    const eventToAdd: Omit<Event, 'id'> = {
+      name: newEventData.name,
+      description: newEventData.description,
+      date: '', // Context will provide default if empty
+      // Dates are already strings in 'yyyy-MM-dd' format from the dialog
+      collectionStartDate: newEventData.collectionStartDate,
+      collectionEndDate: newEventData.collectionEndDate,
     };
-    setEvents((prevEvents) => [...prevEvents, eventWithId]);
+    addEvent(eventToAdd); // Call addEvent from context
   };
 
 
@@ -83,13 +104,18 @@ export default function Home() {
 
         <div className="flex-1 p-4 space-y-4">
           <h2 className="text-2xl font-bold tracking-tight">{t('Events')}</h2>
-          <EventList events={events} /> {/* Pass state variable */}
+          {/* Pass context state and functions to EventList */}
+          <EventList
+            events={events} // From context
+            onDelete={deleteEvent} // From context
+            onReorder={handleReorderEvents} // Local handler using setEvents from context
+          />
         </div>
 
         <EventCreateDialog
           open={isCreateEventOpen}
           onOpenChange={setIsCreateEventOpen}
-          onEventCreated={addEvent} // Pass the addEvent function
+          onEventCreated={handleCreateEvent} // Use the adapted handler
         />
       </div>
     </SidebarProvider>
