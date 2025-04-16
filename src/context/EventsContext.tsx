@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode, Dispatch, SetStateAction } from 'react';
+import React, { createContext, useState, useContext, ReactNode, Dispatch, SetStateAction, useEffect } from 'react';
 import useTranslation from '@/hooks/use-translation'; // Import useTranslation
 
 // Define the Event type (ensure this matches the type used elsewhere)
@@ -42,7 +42,7 @@ interface EventsProviderProps {
 export const EventsProvider: React.FC<EventsProviderProps> = ({ children }) => {
   const { t } = useTranslation(); // Get translation function
 
-  // Define initial state directly
+  // Define initial state with clearer identifiers
    const initialEventsData: Event[] = [
     {
       id: '1',
@@ -52,10 +52,25 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({ children }) => {
       collectionStartDate: '2025-03-25',
       collectionEndDate: '2025-04-03',
     },
+    // Add a test event
+    {
+      id: '2',
+      name: 'テストイベント',
+      date: '2025/4/15',
+      description: 'テスト用イベント',
+      collectionStartDate: '2025-04-15',
+      collectionEndDate: '2025-04-20',
+    }
   ];
 
-
   const [events, setEvents] = useState<Event[]>(initialEventsData);
+  
+  // Debug logging for events data
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      console.log('EventsContext: Events loaded:', events.map(e => ({id: e.id, name: e.name})));
+    }
+  }, [events]);
 
   const addEvent = (newEventData: Omit<Event, 'id'>) => {
     const eventWithId: Event = {

@@ -36,7 +36,7 @@ export default function RootLayout({
            {/* Main content container */}
            <div className="flex flex-col min-h-screen">
              {/* Content area with dynamic padding for the ad banner space */}
-             <div className="flex-1">
+             <div className="flex-1 pb-[60px] md:pb-[100px]"> {/* Added padding for ad space */}
                {children}
              </div>
              

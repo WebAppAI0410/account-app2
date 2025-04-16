@@ -180,7 +180,16 @@ export const EventList: React.FC<EventListProps> = ({ events, onDelete, onReorde
   );
 
   const handleViewDetails = (eventId: string) => {
-    router.push(`/events/${eventId}`);
+    // Add debugging logs to track navigation
+    console.log('Navigating to event details:', { 
+      eventId, 
+      eventIdType: typeof eventId,
+      url: `/events/${eventId}`
+    });
+    
+    // Make sure eventId is a string
+    const eventIdString = String(eventId);
+    router.push(`/events/${eventIdString}`);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {

@@ -51,17 +51,47 @@ const formatSimpleDate = (dateStr: string | Date | undefined): string => {
 };
 
 // Rename the component slightly to avoid confusion
-const EventDetailsClient: React.FC<EventDetailsProps> = ({ params }) => {
-  // Access eventId directly from params in a Client Component page
-  const { eventId } = params;
+const EventDetailsClient = ({ params }: EventDetailsProps): React.ReactNode => {
+  // More robust parameter handling with detailed logging
+  console.log('Raw params received in EventDetailsClient:', params);
+  
+  // Extract eventId with fallback to empty string and explicit type checking
+  const eventId = params && typeof params === 'object' && 'eventId' in params ? String(params.eventId) : '';
+  
+  console.log('Extracted eventId:', eventId, 'Type:', typeof eventId, 'Length:', eventId.length);
+  
   const router = useRouter();
   const { t } = useTranslation();
   const { events, updateEvent } = useEvents();
+  
+  // Log initial state to help diagnose issues
+  console.log('Events from context:', events?.map(e => ({id: e.id, name: e.name})));
 
   // Get the current event and handle the case where events might be undefined
-  const currentEvent = useMemo(() =>
-    events ? events.find(e => e.id === eventId) : undefined
-  , [events, eventId]);
+  const currentEvent = useMemo(() => {
+    if (!events || !eventId) return undefined;
+    
+    // More detailed debug logging to help diagnose the issue
+    console.log('EventDetailsClient - Looking for event:', {
+      eventId: eventId,
+      eventIdType: typeof eventId,
+      availableIds: events.map(e => ({id: e.id, type: typeof e.id, name: e.name}))
+    });
+    
+    // More robust ID comparison - convert both to strings
+    return events.find(e => String(e.id) === String(eventId));
+  }, [events, eventId]);
+  
+  // Add debug logging to help identify event loading issues
+  useEffect(() => {
+    console.log('EventDetailsClient: Current state:', { 
+      eventId, 
+      eventsLoaded: !!events,
+      eventsCount: events?.length || 0,
+      currentEventFound: !!currentEvent,
+      eventDetails: currentEvent || 'Not found'
+    });
+  }, [eventId, events, currentEvent]);
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -260,8 +290,38 @@ const EventDetailsClient: React.FC<EventDetailsProps> = ({ params }) => {
   };
   // --- End of handlers ---
 
+  // Enhanced loading and error states
   if (!currentEvent) {
-    return <div className="p-4">Loading event details or event not found...</div>;
+    // If events are not loaded yet (undefined or null)
+    if (!events) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[50vh] p-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mb-4"></div>
+          <p className="text-center text-muted-foreground">Loading event data...</p>
+        </div>
+      );
+    }
+    
+    // If events are loaded but the specified event ID wasn't found
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] p-4">
+        <div className="text-red-500 mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <p className="text-center font-medium">Event not found</p>
+        <p className="text-center text-muted-foreground mt-2">The requested event (ID: {eventId}) does not exist</p>
+        <Button 
+          onClick={() => router.back()} 
+          className="mt-4 px-4 py-2 bg-primary text-primary-foreground rounded-md"
+        >
+          Return to events list
+        </Button>
+      </div>
+    );
   }
 
   return (
