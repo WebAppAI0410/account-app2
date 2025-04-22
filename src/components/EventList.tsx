@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -67,10 +67,10 @@ const formatSimpleDate = (dateStr: string): string => {
 };
 
 // Create a Sortable Item component to wrap the Card
-const SortableEventCard: React.FC<{ event: Event; onDelete: (id: string) => void; onViewDetails: (id: string) => void }> = ({ event, onDelete, onViewDetails }) => {
+const SortableEventCard: React.FC<{ event: Event; onDelete: (id: string) => void; onViewDetails: (id: string) => void; listId: string }> = ({ event, onDelete, onViewDetails, listId }) => {
   const { t } = useTranslation();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  
+
   const {
     attributes,
     listeners,
@@ -86,7 +86,7 @@ const SortableEventCard: React.FC<{ event: Event; onDelete: (id: string) => void
     opacity: isDragging ? 0.5 : 1, // Make item semi-transparent when dragging
     zIndex: isDragging ? 10 : 'auto', // Ensure dragging item is on top
   };
-  
+
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent card click event
     setDeleteDialogOpen(true);
@@ -137,6 +137,8 @@ const SortableEventCard: React.FC<{ event: Event; onDelete: (id: string) => void
             {t('View Details')}
           </Button>
         </CardFooter>
+        {/* Add aria-describedby for accessibility */}
+        <div aria-describedby={listId} />
       </Card>
 
       {/* Confirmation Dialog */}
@@ -181,12 +183,12 @@ export const EventList: React.FC<EventListProps> = ({ events, onDelete, onReorde
 
   const handleViewDetails = (eventId: string) => {
     // Add debugging logs to track navigation
-    console.log('Navigating to event details:', { 
-      eventId, 
+    console.log('Navigating to event details:', {
+      eventId,
       eventIdType: typeof eventId,
       url: `/events/${eventId}`
     });
-    
+
     // Make sure eventId is a string
     const eventIdString = String(eventId);
     router.push(`/events/${eventIdString}`);
@@ -202,6 +204,9 @@ export const EventList: React.FC<EventListProps> = ({ events, onDelete, onReorde
     }
   };
 
+  // Generate a unique ID for aria-describedby
+  const listId = useMemo(() => `DndDescribedBy-${Math.random().toString(36).substring(2)}`, []);
+
   return (
     <DndContext
       sensors={sensors}
@@ -212,13 +217,14 @@ export const EventList: React.FC<EventListProps> = ({ events, onDelete, onReorde
         items={events.map((e) => e.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" id={listId}>
           {events.map((event) => (
             <SortableEventCard
               key={event.id}
               event={event}
               onDelete={onDelete}
               onViewDetails={handleViewDetails}
+              listId={listId} // Pass the listId to SortableEventCard
             />
           ))}
         </div>
