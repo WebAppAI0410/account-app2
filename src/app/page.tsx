@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react'; // Keep useState for local dialog state
 import { useEvents } from '@/context/EventsContext'; // Import the context hook
+import { useIsMobile } from '@/hooks/use-mobile'; // Import the mobile detection hook
 import {
   Sidebar,
   SidebarContent,
@@ -50,6 +51,7 @@ export default function Home() {
   const [isCreateEventOpen, setIsCreateEventOpen] = useState(false);
   const router = useRouter();
   const { t } = useTranslation();
+  const isMobile = useIsMobile(); // Detect if we're on a mobile device
 
   // Function to handle reordering (uses setEvents from context)
   const handleReorderEvents = (reorderedEvents: Event[]) => {
@@ -73,7 +75,30 @@ export default function Home() {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen">
+      <div className="flex h-screen relative">
+        {/* Mobile hamburger menu button */}
+        {isMobile && (
+          <div className="fixed top-4 left-4 z-50">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => {
+                // Find and use the setOpenMobile function from the sidebar context
+                const sidebarContext = document.querySelector('[data-sidebar="sidebar"]');
+                if (sidebarContext) {
+                  // This will trigger the Sheet to open
+                  const triggerButton = sidebarContext.parentElement?.querySelector('button');
+                  triggerButton?.click();
+                }
+              }}
+              className="bg-background/80 backdrop-blur-sm"
+            >
+              <Icons.menu className="h-5 w-5" />
+              <span className="sr-only">メニューを開く</span>
+            </Button>
+          </div>
+        )}
+        
         <Sidebar>
           <SidebarHeader>
             <div className="flex items-center space-x-2">
@@ -111,6 +136,17 @@ export default function Home() {
             onReorder={handleReorderEvents} // Local handler using setEvents from context
           />
         </div>
+
+        {/* Mobile floating action button for creating events - positioned above the ad banner */}
+        {isMobile && (
+          <Button
+            className="fixed bottom-[70px] right-4 rounded-full w-12 h-12 shadow-lg z-50"
+            onClick={() => setIsCreateEventOpen(true)}
+          >
+            <Icons.plus className="h-5 w-5" />
+            <span className="sr-only">{t('Create Event')}</span>
+          </Button>
+        )}
 
         <EventCreateDialog
           open={isCreateEventOpen}

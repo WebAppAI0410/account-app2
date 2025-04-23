@@ -52,15 +52,6 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({ children }) => {
       collectionStartDate: '2025-03-25',
       collectionEndDate: '2025-04-03',
     },
-    // Add a test event
-    {
-      id: '2',
-      name: 'テストイベント',
-      date: '2025/4/15',
-      description: 'テスト用イベント',
-      collectionStartDate: '2025-04-15',
-      collectionEndDate: '2025-04-20',
-    }
   ];
 
   const [events, setEvents] = useState<Event[]>(initialEventsData);

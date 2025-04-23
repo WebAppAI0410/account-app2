@@ -101,8 +101,11 @@ const EventDetailsClient = ({ params }: EventDetailsProps): React.ReactNode => {
   const [editedEndDate, setEditedEndDate] = useState<Date | undefined>(undefined);
 
   // Participants/Expenses state
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  // 修正：useMemoを使って初期値をSSR時にも安定させる
+  const initialParticipants = useMemo(() => [], []);
+  const initialExpenses = useMemo(() => [], []);
+  const [participants, setParticipants] = useState<Participant[]>(initialParticipants);
+  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [newParticipantName, setNewParticipantName] = useState('');
   const [newParticipantEmail, setNewParticipantEmail] = useState('');
   const [newParticipantAmountOwed, setNewParticipantAmountOwed] = useState('');
@@ -129,6 +132,7 @@ const EventDetailsClient = ({ params }: EventDetailsProps): React.ReactNode => {
   };
 
   // Initialize edit form effect
+  // 修正：Client-sideのみで実行される初期化処理（Hydrationエラー回避）
   useEffect(() => {
     if (currentEvent) {
       setEditedName(currentEvent.name);
@@ -136,8 +140,13 @@ const EventDetailsClient = ({ params }: EventDetailsProps): React.ReactNode => {
       // Use safe parsing function
       setEditedStartDate(parseDateString(currentEvent.collectionStartDate));
       setEditedEndDate(parseDateString(currentEvent.collectionEndDate));
-      setParticipants([]); // Reset participants on event change
-      setExpenses([]); // Reset expenses on event change
+      
+      // サーバー/クライアント間の不一致を避けるため、useEffectの初回実行時のみ初期化
+      if (typeof window !== 'undefined') {
+        // クライアントサイドでのみ実行
+        setParticipants(prev => prev.length === 0 ? [] : prev); // 空の場合のみリセット
+        setExpenses(prev => prev.length === 0 ? [] : prev); // 空の場合のみリセット
+      }
     }
   }, [currentEvent]);
 
@@ -170,6 +179,7 @@ const EventDetailsClient = ({ params }: EventDetailsProps): React.ReactNode => {
     setAmountPaidManually({...amountPaidManually, [participantId]: value});
   };
 
+  // 修正：participantsを依存配列から削除して無限ループを回避
   useEffect(() => {
     if (participants.length > 0) {
       setParticipants(prev => prev.map(p => {
@@ -181,7 +191,7 @@ const EventDetailsClient = ({ params }: EventDetailsProps): React.ReactNode => {
         return p;
       }));
     }
-  }, [amountPaidManually, participants]);
+  }, [amountPaidManually]); // participantsを依存配列から削除
 
   // Totals
   const totalAmountPaid = useMemo(() =>

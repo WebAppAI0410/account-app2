@@ -36,11 +36,11 @@ export default function RootLayout({
            {/* Main content container */}
            <div className="flex flex-col min-h-screen">
              {/* Content area with dynamic padding for the ad banner space */}
-             <div className="flex-1 pb-[60px] md:pb-[100px]"> {/* Added padding for ad space */}
+             <div className="flex-1 pb-[60px] md:pb-[100px] relative z-10"> {/* Added z-10 to keep content above ad */}
                {children}
              </div>
              
-             {/* Ad Banner Manager at the bottom of the layout */}
+             {/* Ad Banner is now self-contained with fixed positioning */}
              <AdBannerManagerClient />
            </div>
            {/* Toaster for notifications */}

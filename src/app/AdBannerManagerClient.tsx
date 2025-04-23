@@ -8,7 +8,7 @@ export default function AdBannerManagerClient() {
   const [bannerDisplayed, setBannerDisplayed] = useState(false);
 
   useEffect(() => {
-    // Show banner when the component mounts - with improved handling 
+    // Show banner when the component mounts - with improved handling
     const displayBanner = async () => {
       try {
         // Banner visibility state check with improved debugging
@@ -46,14 +46,10 @@ export default function AdBannerManagerClient() {
       console.log('[AdBanner] AdMob is not available, skipping banner display');
     }
 
-    // Cleanup: hide banner on unmount if it was displayed
-    return () => {
-      if (bannerDisplayed) {
-        console.log('[AdBanner] Component unmounting, hiding banner');
-        hideBanner().catch(err => console.error('[AdBanner] Error hiding banner:', err));
-      }
-    };
-  }, [showBanner, hideBanner, isAdMobAvailable, bannerVisible, bannerDisplayed]);
+    // NOTE: We've removed the cleanup function that hides banner on unmount
+    // This fixes the issue with the banner disappearing when navigating back from detail pages
+    // The banner will persist between page navigations
+  }, [showBanner, isAdMobAvailable, bannerVisible, bannerDisplayed]);
   
   // Log component state for debugging
   console.log('AdBannerManagerClient render:', {
@@ -63,18 +59,22 @@ export default function AdBannerManagerClient() {
     isAdMobAvailable
   });
 
-  // In web development, we might want to render a placeholder element to account for the space
-  // occupied by the mock banner, depending on our layout requirements
+  // In web development, we render a placeholder with fixed positioning at the bottom
   if (isWebDevelopment && bannerVisible) {
     return (
-      <div 
-        className="h-[50px] md:h-[90px] w-full" 
+      <div
+        className="fixed bottom-0 left-0 w-full h-[50px] md:h-[90px] bg-gray-100 border-t border-gray-200 z-0 pb-safe"
+        style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         aria-hidden="true"
         data-testid="ad-banner-placeholder"
-      />
+      >
+        <div className="flex items-center justify-center h-full text-sm text-gray-500">
+          広告バナー位置
+        </div>
+      </div>
     );
   }
 
-  // No visible UI component for native environment (banner is handled by native SDK)
-  return null;
+  // Native banner is fixed at the bottom by the SDK, but we return a container for consistency
+  return bannerVisible ? <div className="fixed bottom-0 left-0 w-full z-0" /> : null;
 }
