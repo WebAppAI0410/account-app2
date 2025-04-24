@@ -20,6 +20,7 @@ import useTranslation from '@/hooks/use-translation';
 import { useEvents } from '@/context/EventsContext';
 import { Textarea } from '@/components/ui/textarea';
 import { CalendarIcon } from 'lucide-react';
+import { PageHeader } from '@/components/PageHeader';
 
 // Define the Event interface to match EventsContext
 interface Event {
@@ -335,24 +336,27 @@ const EventDetailsClient = ({ params }: EventDetailsProps): React.ReactNode => {
   }
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* Top Bar */}
-      <div className="p-4 flex justify-between items-center border-b sticky top-0 bg-background z-10">
-        <Button onClick={() => router.back()}>{t('Back to Events')}</Button>
-        <div>
-          {isEditing && (
-             <Button variant="outline" onClick={handleCancelEdit} className="mr-2">
-               {t('Cancel')}
-             </Button>
-          )}
-          <Button onClick={handleEditToggle}>
-            {isEditing ? t('Save') : t('Edit')}
-          </Button>
-        </div>
+    <div className="flex flex-col min-h-screen">
+      {/* 使い方ページやプランページと同じPageHeaderを使用 */}
+      <PageHeader 
+        title={currentEvent.name} 
+        description={currentEvent.description || t('No description provided.')}
+      />
+      
+      {/* 編集ボタン */}
+      <div className="p-4 flex justify-end items-center">
+        {isEditing && (
+           <Button variant="outline" onClick={handleCancelEdit} className="mr-2">
+             {t('Cancel')}
+           </Button>
+        )}
+        <Button onClick={handleEditToggle}>
+          {isEditing ? t('Save') : t('Edit')}
+        </Button>
       </div>
 
       {/* Main Scrollable Content */}
-      <div className="flex-1 p-4 overflow-y-auto">
+      <div className="flex-1 p-4 overflow-y-auto pb-[60px] md:pb-[100px]">
         <Card>
           <CardHeader>
             {/* Event Details - Editable */}
