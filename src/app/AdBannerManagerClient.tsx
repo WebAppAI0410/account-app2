@@ -63,7 +63,7 @@ export default function AdBannerManagerClient() {
   if (isWebDevelopment && bannerVisible) {
     return (
       <div
-        className="fixed bottom-0 left-0 w-full h-[50px] md:h-[90px] bg-gray-100 border-t border-gray-200 z-0 pb-safe"
+        className="fixed bottom-0 left-0 w-full h-[50px] md:h-[90px] bg-gray-100 border-t border-gray-200 z-50 pb-safe"
         style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}
         aria-hidden="true"
         data-testid="ad-banner-placeholder"
@@ -76,5 +76,5 @@ export default function AdBannerManagerClient() {
   }
 
   // Native banner is fixed at the bottom by the SDK, but we return a container for consistency
-  return bannerVisible ? <div className="fixed bottom-0 left-0 w-full z-0" /> : null;
+  return bannerVisible ? <div className="fixed bottom-0 left-0 w-full z-50" /> : null;
 }

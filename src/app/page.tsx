@@ -60,28 +60,14 @@ export default function Home() {
   const isDesktop = useIsDesktop(); // Detect if we're on a desktop device
   const { state } = useSidebar(); // Get sidebar state
   
-  // Create conditional class for main content based on sidebar state
-  // メインコンテンツのクラス - React.useMemoを使用して不要な再計算を防止
+  // メインコンテンツのクラス - よりシンプルでスタイリッシュなレイアウトに
   const mainContentClass = React.useMemo(() => {
     return cn(
-      // ベースクラス
-      "flex-1 p-4 space-y-4",
-      
-      // 幅の制御（サイドバーの状態に応じて変更）
-      "transition-all duration-300 ease-in-out",
-      
-      // タブレット特有のスタイリング - 幅を調整
-      isTablet && "tablet:w-full",
-      isTablet && state === "expanded" && "tablet:w-[calc(100%-var(--sidebar-width))]",
-      
-      // デスクトップ特有のスタイリング - 幅を調整
-      isDesktop && "desktop:w-full",
-      isDesktop && state === "expanded" && "desktop:w-[calc(100%-var(--sidebar-width))]",
-      
-      // 最大幅を設定して、コンテンツが広がりすぎないようにする
-      "max-w-full"
+      "w-full space-y-6 transition-all duration-300 ease-out max-w-full",
+      "px-4 py-6 md:px-6 lg:px-8", // 端末サイズによる余白調整
+      "bg-background/30 backdrop-blur-[2px]" // 微妙な背景ブラー効果
     );
-  }, [isMobile, isTablet, isDesktop, state]);
+  }, []);
 
   // Function to handle reordering (uses setEvents from context)
   const handleReorderEvents = (reorderedEvents: Event[]) => {
@@ -104,118 +90,125 @@ export default function Home() {
 
 
   return (
-      <div className="flex flex-col min-h-screen relative overflow-x-hidden">
-        {/* Hamburger menu button - displayed on all devices */}
-        <div className="fixed top-4 right-4 z-50">
-            <SidebarTrigger
-              className="bg-background/80 backdrop-blur-sm"
-              aria-label={t('Open Menu')}
-              aria-expanded={state === "expanded"}
-              aria-controls="sidebar-content"
-            >
-              <Icons.menu className="h-5 w-5" />
-              <span className="sr-only">メニューを開く</span>
-            </SidebarTrigger>
-          </div>
-        
-        <Sidebar side="right" id="sidebar-content">
-          <SidebarHeader>
-            <div className="flex items-center space-x-2">
-              <Icons.coins className="h-6 w-6" />
-              <h4 className="font-semibold text-md">{t('EventBalance')}</h4>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarTrigger>
-                  <Icons.list className="mr-2 h-4 w-4" />
-                  <span>{t('Events')}</span>
-                </SidebarTrigger>
-              </SidebarMenuItem>
-              
-              {/* テーマ切替 */}
-              <SidebarMenuItem>
-                <div className="flex justify-between items-center w-full px-3 py-2">
-                  <div className="flex items-center">
-                    <Icons.dark className="mr-2 h-4 w-4" />
-                    <span>{t('Theme')}</span>
-                  </div>
-                  <ThemeToggle />
-                </div>
-              </SidebarMenuItem>
-              
-              {/* 使い方ページへのリンク */}
-              <SidebarMenuItem>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => router.push('/how-to')}
-                >
-                  <Icons.help className="mr-2 h-4 w-4" />
-                  <span>{t('How to Use')}</span>
-                </Button>
-              </SidebarMenuItem>
-              
-              {/* プランページへのリンク */}
-              <SidebarMenuItem>
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start"
-                  onClick={() => router.push('/plans')}
-                >
-                  <Icons.creditCard className="mr-2 h-4 w-4" />
-                  <span>{t('Plans')}</span>
-                </Button>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarFooter>
-            <Separator />
-            <div className="p-2">
-              <Button variant="secondary" onClick={() => setIsCreateEventOpen(true)} className="w-full">
-                <Icons.plus className="mr-2 h-4 w-4" />
-                {t('Create Event')}
-              </Button>
-            </div>
-          </SidebarFooter>
-        </Sidebar>
-
-        <main
-          className={mainContentClass}
-          style={{
-            // インラインスタイルでトランジション対象を明示
-            transitionProperty: 'width, margin',
-            // GPUアクセラレーションを活用
-            transform: 'translateZ(0)',
-            // ブラウザに変更を予告
-            willChange: 'width, margin'
-          }}
-          aria-label={t('Events')}
+    // よりシンプルなグリッドレイアウトで分割
+    <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] min-h-screen relative overflow-x-hidden">
+      {/* ハンバーガーメニューボタン - より洗練されたデザイン */}
+      <div className="fixed top-4 right-4 z-50">
+        <SidebarTrigger
+          className="bg-background/80 backdrop-blur-md shadow-sm rounded-full p-2.5 transition-all hover:shadow-md"
+          aria-label={t('Open Menu')}
+          aria-expanded={state === "expanded"}
+          aria-controls="sidebar-content"
         >
-          <h2 className="text-2xl font-bold tracking-tight">{t('Events')}</h2>
-          {/* Pass context state and functions to EventList */}
-          <EventList
-            events={events} // From context
-            onDelete={deleteEvent} // From context
-            onReorder={handleReorderEvents} // Local handler using setEvents from context
-          />
-        </main>
-
-        {/* Floating action button for creating events - positioned above the ad banner */}
-        <Button
-            className="fixed bottom-[70px] right-4 rounded-full w-12 h-12 shadow-lg z-50"
-            onClick={() => setIsCreateEventOpen(true)}
-          >
-            <Icons.plus className="h-5 w-5" />
-            <span className="sr-only">{t('Create Event')}</span>
-        </Button>
-
-        <EventCreateDialog
-          open={isCreateEventOpen}
-          onOpenChange={setIsCreateEventOpen}
-          onEventCreated={handleCreateEvent} // Use the adapted handler
-        />
+          <Icons.menu className="h-5 w-5" />
+          <span className="sr-only">メニューを開く</span>
+        </SidebarTrigger>
       </div>
-    );
+      
+      {/* サイドバー - よりエレガントなデザイン */}
+      <Sidebar side="right" id="sidebar-content" className="border-l shadow-lg">
+        <SidebarHeader className="px-6 py-4">
+          <div className="flex items-center space-x-2">
+            <Icons.coins className="h-6 w-6 text-primary" />
+            <h4 className="font-medium text-lg tracking-tight">{t('EventBalance')}</h4>
+          </div>
+        </SidebarHeader>
+        <SidebarContent className="px-2">
+          <SidebarMenu>
+            <SidebarMenuItem className="my-1">
+              <SidebarTrigger className="hover:bg-accent/50 rounded-md transition-colors">
+                <Icons.list className="mr-2 h-4 w-4" />
+                <span>{t('Events')}</span>
+              </SidebarTrigger>
+            </SidebarMenuItem>
+            
+            {/* テーマ切替 - よりシンプルなレイアウト */}
+            <SidebarMenuItem className="my-1">
+              <div className="flex justify-between items-center w-full px-3 py-2 hover:bg-accent/50 rounded-md transition-colors">
+                <div className="flex items-center">
+                  <Icons.dark className="mr-2 h-4 w-4" />
+                  <span>{t('Theme')}</span>
+                </div>
+                <ThemeToggle />
+              </div>
+            </SidebarMenuItem>
+            
+            {/* 使い方ページへのリンク */}
+            <SidebarMenuItem className="my-1">
+              <Button
+                variant="ghost"
+                className="w-full justify-start hover:bg-accent/50 rounded-md"
+                onClick={() => router.push('/how-to')}
+              >
+                <Icons.help className="mr-2 h-4 w-4" />
+                <span>{t('How to Use')}</span>
+              </Button>
+            </SidebarMenuItem>
+            
+            {/* プランページへのリンク */}
+            <SidebarMenuItem className="my-1">
+              <Button
+                variant="ghost"
+                className="w-full justify-start hover:bg-accent/50 rounded-md"
+                onClick={() => router.push('/plans')}
+              >
+                <Icons.creditCard className="mr-2 h-4 w-4" />
+                <span>{t('Plans')}</span>
+              </Button>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarContent>
+        <SidebarFooter>
+          <Separator className="my-2" />
+          <div className="p-4">
+            <Button 
+              variant="secondary" 
+              onClick={() => setIsCreateEventOpen(true)} 
+              className="w-full shadow-sm hover:shadow transition-all"
+            >
+              <Icons.plus className="mr-2 h-4 w-4" />
+              {t('Create Event')}
+            </Button>
+          </div>
+        </SidebarFooter>
+      </Sidebar>
+
+      {/* メインコンテンツ - よりすっきりとしたレイアウト */}
+      <main
+        className={mainContentClass}
+        style={{
+          transitionProperty: 'width, margin, background',
+          willChange: 'width, margin, opacity'
+        }}
+        aria-label="イベント一覧"
+      >
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground/90">イベント一覧</h2>
+        </div>
+        
+        <div className="relative">
+          <EventList
+            events={events}
+            onDelete={deleteEvent}
+            onReorder={handleReorderEvents}
+          />
+        </div>
+      </main>
+
+      {/* フローティングアクションボタン - よりモダンなデザイン */}
+      <Button
+        className="fixed bottom-[70px] right-4 rounded-full w-14 h-14 shadow-lg hover:shadow-xl z-50 transition-all duration-300"
+        onClick={() => setIsCreateEventOpen(true)}
+      >
+        <Icons.plus className="h-6 w-6" />
+        <span className="sr-only">{t('Create Event')}</span>
+      </Button>
+      
+      <EventCreateDialog
+        open={isCreateEventOpen}
+        onOpenChange={setIsCreateEventOpen}
+        onEventCreated={handleCreateEvent}
+      />
+    </div>
+  );
 }

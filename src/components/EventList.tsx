@@ -20,7 +20,7 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy, // Using vertical strategy, adjust grid layout if needed
+  verticalListSortingStrategy,
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -77,18 +77,18 @@ const SortableEventCard: React.FC<{ event: Event; onDelete: (id: string) => void
     setNodeRef,
     transform,
     transition,
-    isDragging, // Use isDragging to style the item while being dragged
+    isDragging,
   } = useSortable({ id: event.id });
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.5 : 1, // Make item semi-transparent when dragging
-    zIndex: isDragging ? 10 : 'auto', // Ensure dragging item is on top
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 10 : 'auto',
   };
 
   const handleDeleteClick = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click event
+    e.stopPropagation();
     setDeleteDialogOpen(true);
   };
 
@@ -99,60 +99,92 @@ const SortableEventCard: React.FC<{ event: Event; onDelete: (id: string) => void
 
   return (
     <>
-      <Card ref={setNodeRef} style={style} {...attributes} className="relative group">
-        {/* Drag Handle - Make the header the drag handle */}
-        <CardHeader {...listeners} className="cursor-move">
-          <CardTitle>{event.name}</CardTitle>
-          <CardDescription>{event.description}</CardDescription>
-          {/* Delete Button - Positioned top-right */}
+      <Card 
+        ref={setNodeRef} 
+        style={style} 
+        {...attributes} 
+        className={cn(
+          "relative group border-muted/40",
+          "transition-all duration-300 ease-in-out",
+          "hover:border-primary/20 hover:shadow-md",
+          "backdrop-blur-[1px]",
+          isDragging ? "rotate-1 scale-[1.02] shadow-lg" : ""
+        )}
+      >
+        {/* ドラッグハンドル - より洗練された外観に */}
+        <CardHeader {...listeners} className="cursor-move pb-3">
+          <div className="absolute top-3 left-3 opacity-30 group-hover:opacity-70 transition-opacity">
+            <Icons.gripVertical className="h-4 w-4" />
+          </div>
+          
+          <div className="pl-6">
+            <CardTitle className="text-xl font-medium tracking-tight">{event.name}</CardTitle>
+            <CardDescription className="mt-1.5 line-clamp-2">{event.description}</CardDescription>
+          </div>
+          
+          {/* 削除ボタン - 右上に配置し、ホバー時に表示 */}
           <Button
             variant="ghost"
             size="icon"
-            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity" // Show on hover
+            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-destructive/10 hover:text-destructive"
             onClick={handleDeleteClick}
             aria-label={t('Delete Event')}
           >
             <Icons.trash className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent>
-          <div className="mb-2 flex items-center text-sm text-muted-foreground">
-            <Icons.calendar className="mr-2 h-4 w-4" />
-            <span>{t('Creation Date')}: </span>
-            {event.date ? event.date : <span>{t('Date not set')}</span>}
+        
+        <CardContent className="pb-4">
+          <div className="mb-2.5 flex items-center text-sm text-muted-foreground">
+            <Icons.calendar className="mr-2 h-4 w-4 text-primary/70" />
+            <span className="font-medium mr-1">{t('Creation Date')}: </span>
+            {event.date ? <span className="opacity-90">{event.date}</span> : <span className="italic opacity-60">{t('Date not set')}</span>}
           </div>
+          
           {(event.collectionStartDate || event.collectionEndDate) && (
             <div className="flex items-center text-sm text-muted-foreground">
-              <Icons.calendar className="mr-2 h-4 w-4" />
-              <span>{t('Collection Period')}: </span>
-              {event.collectionStartDate ? formatSimpleDate(event.collectionStartDate) : t('N/A')}
-              {' - '}
-              {event.collectionEndDate ? formatSimpleDate(event.collectionEndDate) : t('N/A')}
+              <Icons.calendar className="mr-2 h-4 w-4 text-secondary/70" />
+              <span className="font-medium mr-1">{t('Collection Period')}: </span>
+              <span className="opacity-90">
+                {event.collectionStartDate ? formatSimpleDate(event.collectionStartDate) : t('N/A')}
+                {' - '}
+                {event.collectionEndDate ? formatSimpleDate(event.collectionEndDate) : t('N/A')}
+              </span>
             </div>
           )}
         </CardContent>
-        <CardFooter>
-          <Button onClick={() => onViewDetails(event.id)} className="w-full">
-            <Icons.arrowRight className="mr-2 h-4 w-4" />
-            {t('View Details')}
+        
+        <CardFooter className="pt-0">
+          <Button 
+            onClick={() => onViewDetails(event.id)} 
+            className="w-full shadow-sm group relative overflow-hidden"
+            variant="default"
+          >
+            <span className="relative z-10 flex items-center">
+              {t('View Details')}
+              <Icons.arrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </span>
           </Button>
         </CardFooter>
-        {/* Add aria-describedby for accessibility */}
+        
         <div aria-describedby={listId} />
       </Card>
 
       {/* Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('Delete Event')}</AlertDialogTitle>
+            <AlertDialogTitle className="text-destructive">{t('Delete Event')}</AlertDialogTitle>
             <AlertDialogDescription>
               {t('Are you sure you want to delete this event?')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>{t('Cancel')}</AlertDialogCancel> {/* Explicitly close on cancel */}
-            <AlertDialogAction onClick={handleConfirmDelete}> {/* Ensure this calls the correct handler */}
+            <AlertDialogCancel onClick={() => setDeleteDialogOpen(false)}>{t('Cancel')}</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleConfirmDelete} 
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               {t('Delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -217,18 +249,26 @@ export const EventList: React.FC<EventListProps> = ({ events, onDelete, onReorde
         items={events.map((e) => e.id)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3" id={listId}>
-          {events.map((event) => (
-            <SortableEventCard
-              key={event.id}
-              event={event}
-              onDelete={onDelete}
-              onViewDetails={handleViewDetails}
-              listId={listId} // Pass the listId to SortableEventCard
-            />
-          ))}
+        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3" id={listId}>
+          {events.length > 0 ? (
+            events.map((event) => (
+              <SortableEventCard
+                key={event.id}
+                event={event}
+                onDelete={onDelete}
+                onViewDetails={handleViewDetails}
+                listId={listId}
+              />
+            ))
+          ) : (
+            <div className="col-span-full flex flex-col items-center justify-center py-10 text-center">
+              <Icons.calendar className="h-12 w-12 text-muted-foreground/30 mb-4" />
+              <h3 className="text-xl font-medium text-muted-foreground/70 mb-2">{t('No Events Yet')}</h3>
+              <p className="text-muted-foreground/60 max-w-xs">{t('Create your first event to get started')}</p>
+            </div>
+          )}
         </div>
       </SortableContext>
     </DndContext>
   );
-};
+}

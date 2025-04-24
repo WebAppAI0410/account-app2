@@ -12,21 +12,18 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  // デフォルトをライトモードに変更
   const [theme, setTheme] = useState<Theme>('light')
 
-  // クライアントサイドでのみ実行する
   useEffect(() => {
-    // ローカルストレージから保存されたテーマを取得
     const savedTheme = localStorage.getItem('theme') as Theme | null
-    // もしローカルストレージにテーマが保存されていれば、それを適用
     if (savedTheme) {
       setTheme(savedTheme)
       document.documentElement.classList.toggle('dark', savedTheme === 'dark')
     } else {
-      // プリファレンスが設定されていない場合はOSの設定を確認
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-      setTheme(prefersDark ? 'dark' : 'light')
-      document.documentElement.classList.toggle('dark', prefersDark)
+      // OS設定に関わらず常にライトモードを初期値にする
+      setTheme('light')
+      document.documentElement.classList.remove('dark')
     }
   }, [])
 

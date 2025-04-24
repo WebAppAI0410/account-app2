@@ -1,11 +1,6 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
 
 @layer base {
   :root {
@@ -37,7 +32,7 @@ body {
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
@@ -86,5 +81,34 @@ body {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* ボタン、カード、サイドバー、オーバーレイのスタイル例 */
+.btn-primary {
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground, 245 245 245));
+  border-radius: var(--radius);
+  box-shadow: 0 1px 4px 0 rgb(0 0 0 / 0.04);
+  transition: background 0.2s;
+}
+.btn-primary:hover {
+  background: hsl(var(--primary) / 0.9);
+}
+.card {
+  background: hsl(var(--card));
+  color: hsl(var(--foreground));
+  border-radius: var(--radius);
+  box-shadow: 0 1px 4px 0 rgb(0 0 0 / 0.04);
+}
+.sidebar {
+  background: hsl(var(--sidebar-background));
+  color: hsl(var(--sidebar-foreground));
+  border-radius: 0;
+  z-index: 50;
+}
+.overlay {
+  background: rgba(0,0,0,0.5);
+  z-index: 40;
+  transition: opacity 0.3s;
 }
 
