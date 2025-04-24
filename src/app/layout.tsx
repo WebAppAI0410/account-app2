@@ -6,7 +6,8 @@ import { ThemeProvider } from '@/context/ThemeContext';
 import { SubscriptionProvider } from '@/context/SubscriptionContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from "@/components/ui/toaster";
-import AdBannerManagerClient from '@/app/AdBannerManagerClient'; // Use path alias
+import AdBannerManagerClient from '@/app/AdBannerManagerClient'; 
+import BottomNavigation from '@/components/BottomNavigation';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -45,6 +46,9 @@ export default function RootLayout({
                  <div className="flex-1 pb-[60px] md:pb-[100px] relative z-10"> {/* Added z-10 to keep content above ad */}
                    {children}
                  </div>
+                 
+                 {/* BottomNavigation */}
+                 <BottomNavigation />
                  
                  {/* Ad Banner is now self-contained with fixed positioning */}
                  <AdBannerManagerClient />

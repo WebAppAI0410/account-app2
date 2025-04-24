@@ -1,9 +1,10 @@
-
 import {
   ArrowRight,
   ArrowLeft,
   Check,
   ChevronsUpDown,
+  ChevronLeft,
+  ChevronRight,
   Circle,
   Copy,
   Edit,
@@ -35,6 +36,7 @@ import {
   Info,
   CreditCard,
   X,
+  Star,
 } from 'lucide-react';
 
 const Icons = {
@@ -42,6 +44,8 @@ const Icons = {
   arrowLeft: ArrowLeft,
   check: Check,
   chevronDown: ChevronsUpDown,
+  chevronLeft: ChevronLeft,
+  chevronRight: ChevronRight,
   circle: Circle,
   workflow: Workflow,
   close: X,
@@ -65,6 +69,7 @@ const Icons = {
   share: Share2,
   shield: Shield,
   spinner: Loader2,
+  star: Star,
   trash: Trash,
   user: User,
   calendar: Calendar,
@@ -78,4 +83,4 @@ const Icons = {
 
 export { Icons };
 
-    
+
