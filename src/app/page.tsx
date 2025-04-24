@@ -3,6 +3,8 @@
 import React, { useState } from 'react'; // Keep useState for local dialog state
 import { useEvents } from '@/context/EventsContext'; // Import the context hook
 import { useIsMobile } from '@/hooks/use-mobile'; // Import the mobile detection hook
+import { useIsTablet, useIsDesktop } from '@/hooks/use-tablet'; // Import tablet and desktop detection hooks
+import { ThemeToggle } from '@/components/ThemeToggle'; // Import theme toggle component
 import {
   Sidebar,
   SidebarContent,
@@ -12,7 +14,9 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
   SidebarProvider,
+  useSidebar,
 } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 import { Icons } from '@/components/icons';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -52,6 +56,32 @@ export default function Home() {
   const router = useRouter();
   const { t } = useTranslation();
   const isMobile = useIsMobile(); // Detect if we're on a mobile device
+  const isTablet = useIsTablet(); // Detect if we're on a tablet device
+  const isDesktop = useIsDesktop(); // Detect if we're on a desktop device
+  const { state } = useSidebar(); // Get sidebar state
+  
+  // Create conditional class for main content based on sidebar state
+  // メインコンテンツのクラス - React.useMemoを使用して不要な再計算を防止
+  const mainContentClass = React.useMemo(() => {
+    return cn(
+      // ベースクラス
+      "flex-1 p-4 space-y-4",
+      
+      // 幅の制御（サイドバーの状態に応じて変更）
+      "transition-all duration-300 ease-in-out",
+      
+      // タブレット特有のスタイリング - 幅を調整
+      isTablet && "tablet:w-full",
+      isTablet && state === "expanded" && "tablet:w-[calc(100%-var(--sidebar-width))]",
+      
+      // デスクトップ特有のスタイリング - 幅を調整
+      isDesktop && "desktop:w-full",
+      isDesktop && state === "expanded" && "desktop:w-[calc(100%-var(--sidebar-width))]",
+      
+      // 最大幅を設定して、コンテンツが広がりすぎないようにする
+      "max-w-full"
+    );
+  }, [isMobile, isTablet, isDesktop, state]);
 
   // Function to handle reordering (uses setEvents from context)
   const handleReorderEvents = (reorderedEvents: Event[]) => {
@@ -74,32 +104,21 @@ export default function Home() {
 
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen relative">
-        {/* Mobile hamburger menu button */}
-        {isMobile && (
-          <div className="fixed top-4 left-4 z-50">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                // Find and use the setOpenMobile function from the sidebar context
-                const sidebarContext = document.querySelector('[data-sidebar="sidebar"]');
-                if (sidebarContext) {
-                  // This will trigger the Sheet to open
-                  const triggerButton = sidebarContext.parentElement?.querySelector('button');
-                  triggerButton?.click();
-                }
-              }}
+      <div className="flex flex-col min-h-screen relative overflow-x-hidden">
+        {/* Hamburger menu button - displayed on all devices */}
+        <div className="fixed top-4 right-4 z-50">
+            <SidebarTrigger
               className="bg-background/80 backdrop-blur-sm"
+              aria-label={t('Open Menu')}
+              aria-expanded={state === "expanded"}
+              aria-controls="sidebar-content"
             >
               <Icons.menu className="h-5 w-5" />
               <span className="sr-only">メニューを開く</span>
-            </Button>
+            </SidebarTrigger>
           </div>
-        )}
         
-        <Sidebar>
+        <Sidebar side="right" id="sidebar-content">
           <SidebarHeader>
             <div className="flex items-center space-x-2">
               <Icons.coins className="h-6 w-6" />
@@ -114,6 +133,41 @@ export default function Home() {
                   <span>{t('Events')}</span>
                 </SidebarTrigger>
               </SidebarMenuItem>
+              
+              {/* テーマ切替 */}
+              <SidebarMenuItem>
+                <div className="flex justify-between items-center w-full px-3 py-2">
+                  <div className="flex items-center">
+                    <Icons.dark className="mr-2 h-4 w-4" />
+                    <span>{t('Theme')}</span>
+                  </div>
+                  <ThemeToggle />
+                </div>
+              </SidebarMenuItem>
+              
+              {/* 使い方ページへのリンク */}
+              <SidebarMenuItem>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => router.push('/how-to')}
+                >
+                  <Icons.help className="mr-2 h-4 w-4" />
+                  <span>{t('How to Use')}</span>
+                </Button>
+              </SidebarMenuItem>
+              
+              {/* プランページへのリンク */}
+              <SidebarMenuItem>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => router.push('/plans')}
+                >
+                  <Icons.creditCard className="mr-2 h-4 w-4" />
+                  <span>{t('Plans')}</span>
+                </Button>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
@@ -127,7 +181,18 @@ export default function Home() {
           </SidebarFooter>
         </Sidebar>
 
-        <div className="flex-1 p-4 space-y-4">
+        <main
+          className={mainContentClass}
+          style={{
+            // インラインスタイルでトランジション対象を明示
+            transitionProperty: 'width, margin',
+            // GPUアクセラレーションを活用
+            transform: 'translateZ(0)',
+            // ブラウザに変更を予告
+            willChange: 'width, margin'
+          }}
+          aria-label={t('Events')}
+        >
           <h2 className="text-2xl font-bold tracking-tight">{t('Events')}</h2>
           {/* Pass context state and functions to EventList */}
           <EventList
@@ -135,18 +200,16 @@ export default function Home() {
             onDelete={deleteEvent} // From context
             onReorder={handleReorderEvents} // Local handler using setEvents from context
           />
-        </div>
+        </main>
 
-        {/* Mobile floating action button for creating events - positioned above the ad banner */}
-        {isMobile && (
-          <Button
+        {/* Floating action button for creating events - positioned above the ad banner */}
+        <Button
             className="fixed bottom-[70px] right-4 rounded-full w-12 h-12 shadow-lg z-50"
             onClick={() => setIsCreateEventOpen(true)}
           >
             <Icons.plus className="h-5 w-5" />
             <span className="sr-only">{t('Create Event')}</span>
-          </Button>
-        )}
+        </Button>
 
         <EventCreateDialog
           open={isCreateEventOpen}
@@ -154,6 +217,5 @@ export default function Home() {
           onEventCreated={handleCreateEvent} // Use the adapted handler
         />
       </div>
-    </SidebarProvider>
-  );
+    );
 }

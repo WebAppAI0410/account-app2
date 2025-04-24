@@ -1,6 +1,7 @@
 
 import {
   ArrowRight,
+  ArrowLeft,
   Check,
   ChevronsUpDown,
   Circle,
@@ -31,11 +32,14 @@ import {
   List,
   FilePlus,
   Download,
+  Info,
+  CreditCard,
   X,
 } from 'lucide-react';
 
 const Icons = {
   arrowRight: ArrowRight,
+  arrowLeft: ArrowLeft,
   check: Check,
   chevronDown: ChevronsUpDown,
   circle: Circle,
@@ -68,6 +72,8 @@ const Icons = {
   list: List,
   filePlus: FilePlus,
   download: Download,
+  info: Info,
+  creditCard: CreditCard,
 };
 
 export { Icons };

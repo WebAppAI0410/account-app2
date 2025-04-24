@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { EventsProvider } from '@/context/EventsContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from "@/components/ui/toaster";
 import AdBannerManagerClient from '@/app/AdBannerManagerClient'; // Use path alias
 
@@ -32,7 +34,9 @@ export default function RootLayout({
     // Set language to Japanese
     <html lang="ja">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <EventsProvider>
+        <ThemeProvider>
+          <SidebarProvider defaultOpen={false} style={{ '--sidebar-width': '16rem' } as React.CSSProperties}>
+            <EventsProvider>
            {/* Main content container */}
            <div className="flex flex-col min-h-screen">
              {/* Content area with dynamic padding for the ad banner space */}
@@ -45,7 +49,9 @@ export default function RootLayout({
            </div>
            {/* Toaster for notifications */}
            <Toaster />
-        </EventsProvider>
+          </EventsProvider>
+         </SidebarProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
