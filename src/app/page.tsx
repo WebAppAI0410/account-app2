@@ -184,7 +184,7 @@ export default function Home() {
       </main>
       {/* フローティングアクションボタン・ダイアログ */}
       <Button
-        className="fixed bottom-[70px] right-4 rounded-full w-12 h-12 shadow-lg z-50"
+        className="fixed bottom-[60px] md:bottom-[100px] right-4 rounded-full w-12 h-12 shadow-lg z-50"
         onClick={() => setIsCreateEventOpen(true)}
       >
         <Icons.plus className="h-5 w-5" />
