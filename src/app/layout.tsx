@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import { EventsProvider } from '@/context/EventsContext';
 import { ThemeProvider } from '@/context/ThemeContext';
+import { SubscriptionProvider } from '@/context/SubscriptionContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from "@/components/ui/toaster";
 import AdBannerManagerClient from '@/app/AdBannerManagerClient'; // Use path alias
@@ -36,20 +37,22 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider>
           <SidebarProvider defaultOpen={false} style={{ '--sidebar-width': '16rem' } as React.CSSProperties}>
-            <EventsProvider>
-           {/* Main content container */}
-           <div className="flex flex-col min-h-screen">
-             {/* Content area with dynamic padding for the ad banner space */}
-             <div className="flex-1 pb-[60px] md:pb-[100px] relative z-10"> {/* Added z-10 to keep content above ad */}
-               {children}
-             </div>
-             
-             {/* Ad Banner is now self-contained with fixed positioning */}
-             <AdBannerManagerClient />
-           </div>
-           {/* Toaster for notifications */}
-           <Toaster />
-          </EventsProvider>
+            <SubscriptionProvider>
+              <EventsProvider>
+               {/* Main content container */}
+               <div className="flex flex-col min-h-screen">
+                 {/* Content area with dynamic padding for the ad banner space */}
+                 <div className="flex-1 pb-[60px] md:pb-[100px] relative z-10"> {/* Added z-10 to keep content above ad */}
+                   {children}
+                 </div>
+                 
+                 {/* Ad Banner is now self-contained with fixed positioning */}
+                 <AdBannerManagerClient />
+               </div>
+               {/* Toaster for notifications */}
+               <Toaster />
+              </EventsProvider>
+            </SubscriptionProvider>
          </SidebarProvider>
         </ThemeProvider>
       </body>

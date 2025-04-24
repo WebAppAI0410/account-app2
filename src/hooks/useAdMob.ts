@@ -1,19 +1,31 @@
 import { useState, useEffect, useRef } from 'react';
 import { Capacitor } from '@capacitor/core';
 import { AdMob, BannerAdOptions, BannerAdSize, BannerAdPosition, AdOptions, InterstitialAdPluginEvents } from '@capacitor-community/admob';
+import { useSubscription } from '@/context/SubscriptionContext'; // サブスクリプションコンテキストをインポート
 
 // --- Configuration ---
 // Replace with your actual AdMob Ad Unit IDs
 // It's highly recommended to use environment variables for these in a real app
 const AD_UNIT_IDS = {
-  // TODO: Replace with your real Ad Unit ID for banner (Android)
-  android_banner: 'ca-app-pub-3940256099942544/6300978111', // Test ID
-  // TODO: Replace with your real Ad Unit ID for banner (iOS)
-  ios_banner: 'ca-app-pub-3940256099942544/2934735716', // Test ID
-  // TODO: Replace with your real Ad Unit ID for interstitial (Android)
-  android_interstitial: 'ca-app-pub-3940256099942544/1033173712', // Test ID
-  // TODO: Replace with your real Ad Unit ID for interstitial (iOS)
-  ios_interstitial: 'ca-app-pub-3940256099942544/4411468910', // Test ID
+  // テスト中と本番で適切なIDを使い分ける
+  android_banner: process.env.NODE_ENV !== 'production' 
+    ? 'ca-app-pub-3940256099942544/6300978111' // テストID（開発中はこちらを使用）
+    : 'ca-app-pub-7535387517541151/5647951457', // 本番ID
+  
+  // iOS用バナー広告ID
+  ios_banner: process.env.NODE_ENV !== 'production'
+    ? 'ca-app-pub-3940256099942544/2934735716' // テストID
+    : 'ca-app-pub-3940256099942544/2934735716', // TODO: 本番ID設定待ち
+  
+  // Android用インタースティシャル広告ID
+  android_interstitial: process.env.NODE_ENV !== 'production'
+    ? 'ca-app-pub-3940256099942544/1033173712' // テストID
+    : 'ca-app-pub-7535387517541151/3227778034', // 本番ID
+  
+  // iOS用インタースティシャル広告ID
+  ios_interstitial: process.env.NODE_ENV !== 'production'
+    ? 'ca-app-pub-3940256099942544/4411468910' // テストID
+    : 'ca-app-pub-3940256099942544/4411468910', // TODO: 本番ID設定待ち
 };
 
 // Helper function to get Ad Unit IDs, potentially from environment variables
@@ -31,12 +43,10 @@ const getTestDevices = () => {
 };
 
 // --- User Subscription Status ---
-// In a real app, fetch this from your authentication/backend system
-const useUserSubscription = () => {
-  const [status, setStatus] = useState<'free' | 'paid'>('free');
-  // TODO: Implement logic to fetch actual user subscription status
-  const isFreeUser = status === 'free';
-  return { isFreeUser };
+// サブスクリプションコンテキストから状態を取得するように変更
+const getUserSubscriptionStatus = () => {
+  // サブスクリプションコンテキストを直接使用できない場所ではデフォルト値を返す
+  return { isFreeUser: true };
 };
 
 // Types for mock banner elements (for web development)
@@ -57,7 +67,10 @@ interface AdDisplayLog {
 
 // --- AdMob Hook ---
 export const useAdMob = () => {
-  const { isFreeUser } = useUserSubscription();
+  // サブスクリプションコンテキストから状態を取得
+  const subscription = useSubscription();
+  const isFreeUser = !subscription.isPremium; // プレミアムユーザーでない場合のみ広告表示
+
   const [isAdMobAvailable, setIsAdMobAvailable] = useState(false);
   const [isInterstitialLoading, setIsInterstitialLoading] = useState(false);
   const [bannerVisible, setBannerVisible] = useState(false);
@@ -479,7 +492,7 @@ export const useAdMob = () => {
   const showBanner = async (): Promise<boolean> => {
     // Check if user is paid or ads are not available
     if (!isFreeUser) {
-      console.log('Banner ad skipped (paid user).');
+      console.log('Banner ad skipped (premium user).');
       return false;
     }
     
@@ -548,7 +561,7 @@ export const useAdMob = () => {
 
   const resumeBanner = async (): Promise<boolean> => {
     if (!isFreeUser) {
-      console.log('Banner resume skipped (paid user).');
+      console.log('Banner resume skipped (premium user).');
       return false;
     }
     
@@ -574,7 +587,7 @@ export const useAdMob = () => {
   // --- Interstitial Ad Logic ---
   const prepareInterstitial = async (): Promise<boolean> => {
     if (!isFreeUser) {
-      console.log('Interstitial preparation skipped (paid user).');
+      console.log('Interstitial preparation skipped (premium user).');
       return false;
     }
     
@@ -621,7 +634,7 @@ export const useAdMob = () => {
 
   const showInterstitial = async (): Promise<boolean> => {
     if (!isFreeUser) {
-      console.log('Interstitial skipped (paid user).');
+      console.log('Interstitial skipped (premium user).');
       return false;
     }
     

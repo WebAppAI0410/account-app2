@@ -2,12 +2,22 @@
 
 import { useEffect, useState } from 'react';
 import { useAdMob } from '@/hooks/useAdMob';
+import { useSubscription } from '@/context/SubscriptionContext'; // サブスクリプションフックをインポート
 
 export default function AdBannerManagerClient() {
   const { showBanner, hideBanner, bannerVisible, isAdMobAvailable, isWebDevelopment } = useAdMob();
   const [bannerDisplayed, setBannerDisplayed] = useState(false);
+  const { isPremium } = useSubscription(); // プレミアムユーザーかどうかを取得
 
   useEffect(() => {
+    // プレミアムユーザーは広告を表示しない
+    if (isPremium) {
+      console.log('[AdBanner] Premium user detected, hiding banner');
+      hideBanner();
+      setBannerDisplayed(false);
+      return;
+    }
+
     // Show banner when the component mounts - with improved handling
     const displayBanner = async () => {
       try {
@@ -38,26 +48,32 @@ export default function AdBannerManagerClient() {
       }
     };
     
-    // Only attempt to show banner if AdMob is available
-    if (isAdMobAvailable) {
+    // Only attempt to show banner if AdMob is available and not premium user
+    if (isAdMobAvailable && !isPremium) {
       console.log('[AdBanner] AdMob is available, calling displayBanner()');
       displayBanner();
     } else {
-      console.log('[AdBanner] AdMob is not available, skipping banner display');
+      console.log(`[AdBanner] Skipping banner display: AdMob available: ${isAdMobAvailable}, Premium user: ${isPremium}`);
     }
 
     // NOTE: We've removed the cleanup function that hides banner on unmount
     // This fixes the issue with the banner disappearing when navigating back from detail pages
     // The banner will persist between page navigations
-  }, [showBanner, isAdMobAvailable, bannerVisible, bannerDisplayed]);
+  }, [showBanner, hideBanner, isAdMobAvailable, bannerVisible, bannerDisplayed, isPremium]);
   
   // Log component state for debugging
   console.log('AdBannerManagerClient render:', {
     isWebDevelopment,
     bannerVisible,
     bannerDisplayed,
-    isAdMobAvailable
+    isAdMobAvailable,
+    isPremium
   });
+
+  // プレミアムユーザーの場合は何も表示しない
+  if (isPremium) {
+    return null;
+  }
 
   // In web development, we render a placeholder with fixed positioning at the bottom
   if (isWebDevelopment && bannerVisible) {
