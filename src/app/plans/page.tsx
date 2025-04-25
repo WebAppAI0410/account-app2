@@ -179,28 +179,7 @@ export default function PlansPage() {
                   <TableCell>なし</TableCell>
                 </TableRow>
                 <TableRow>
-                  <TableCell className="font-medium">データエクスポート</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>
-                    <Check className="h-4 w-4 text-green-500" />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">高度な分析機能</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>
-                    <Check className="h-4 w-4 text-green-500" />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">支払い催促機能</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>
-                    <Check className="h-4 w-4 text-green-500" />
-                  </TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell className="font-medium">テンプレート機能</TableCell>
+                  <TableCell className="font-medium">カレンダー機能</TableCell>
                   <TableCell>-</TableCell>
                   <TableCell>
                     <Check className="h-4 w-4 text-green-500" />

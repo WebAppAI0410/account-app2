@@ -189,10 +189,11 @@ export default function Home() {
         className={
           cn(
             'fixed right-4 rounded-full w-12 h-12 shadow-lg z-50',
-            // 無料プラン時はタブ＋広告バナー分だけ余白を増やす
+            // ボトムナビゲーションの高さ(56px/64px)＋バナー高さを考慮して位置調整
+            // 安全のため余白も追加
             isPremium
-              ? 'bottom-[60px] md:bottom-[100px]'
-              : 'bottom-[110px] md:bottom-[150px]'
+              ? 'bottom-[76px] md:bottom-[84px]'
+              : 'bottom-[136px] md:bottom-[174px]'
           )
         }
         onClick={() => setIsCreateEventOpen(true)}
