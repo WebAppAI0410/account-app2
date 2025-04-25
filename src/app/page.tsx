@@ -25,6 +25,7 @@ import { EventCreateDialog } from '@/components/EventCreateDialog';
 import { Separator } from '@/components/ui/separator';
 import { useRouter } from 'next/navigation';
 import useTranslation from '@/hooks/use-translation';
+import { useSubscription } from '@/context/SubscriptionContext'; // サブスク判定用
 
 // Define the Event type (consider moving to a shared types file)
 interface Event {
@@ -59,6 +60,7 @@ export default function Home() {
   const isTablet = useIsTablet(); // Detect if we're on a tablet device
   const isDesktop = useIsDesktop(); // Detect if we're on a desktop device
   const { state } = useSidebar(); // Get sidebar state
+  const { isPremium } = useSubscription(); // ←追加: プラン判定
   
   // Create conditional class for main content based on sidebar state
   // メインコンテンツのクラス - サイドバー開閉状態による幅・位置調整を完全に排除
@@ -184,7 +186,15 @@ export default function Home() {
       </main>
       {/* フローティングアクションボタン・ダイアログ */}
       <Button
-        className="fixed bottom-[60px] md:bottom-[100px] right-4 rounded-full w-12 h-12 shadow-lg z-50"
+        className={
+          cn(
+            'fixed right-4 rounded-full w-12 h-12 shadow-lg z-50',
+            // 無料プラン時はタブ＋広告バナー分だけ余白を増やす
+            isPremium
+              ? 'bottom-[60px] md:bottom-[100px]'
+              : 'bottom-[110px] md:bottom-[150px]'
+          )
+        }
         onClick={() => setIsCreateEventOpen(true)}
       >
         <Icons.plus className="h-5 w-5" />

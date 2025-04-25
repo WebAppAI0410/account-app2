@@ -1,6 +1,6 @@
 'use client'; // This is the Client Component
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -52,7 +52,7 @@ const formatSimpleDate = (dateStr: string | Date | undefined): string => {
 };
 
 // Rename the component slightly to avoid confusion
-const EventDetailsClient = ({ params }: EventDetailsProps): React.ReactNode => {
+export default function EventDetailsClient({ params }: { params: { eventId: string } }) {
   // More robust parameter handling with detailed logging
   console.log('Raw params received in EventDetailsClient:', params);
   
@@ -121,6 +121,16 @@ const EventDetailsClient = ({ params }: EventDetailsProps): React.ReactNode => {
   const [isAddParticipantDialogOpen, setIsAddParticipantDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
   const [amountPaidManually, setAmountPaidManually] = useState<Record<string, string>>({});
+
+  // 反復処理確認ダイアログの状態
+  const [isContinueDialogOpen, setIsContinueDialogOpen] = useState(false);
+  const [continueProcessCallback, setContinueProcessCallback] = useState<(() => void) | null>(null);
+  
+  // 反復処理確認ダイアログを表示する関数
+  const showContinueDialog = useCallback((callback: () => void) => {
+    setContinueProcessCallback(() => callback);
+    setIsContinueDialogOpen(true);
+  }, []);
 
   // Initialize edit form effect
   // Helper function to safely parse YYYY-MM-DD string to Date, avoiding timezone issues
@@ -765,6 +775,4 @@ const EventDetailsClient = ({ params }: EventDetailsProps): React.ReactNode => {
       </AlertDialog>
     </div>
   );
-};
-
-export default EventDetailsClient; // Export the client component
+}
