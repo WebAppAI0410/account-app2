@@ -112,3 +112,97 @@
   transition: opacity 0.3s;
 }
 
+/* カレンダーのスタイル */
+.calendar-grid {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  width: 100%;
+  position: relative;
+}
+
+.calendar-days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+}
+
+.calendar-header-cell {
+  text-align: center;
+  font-weight: 500;
+  padding: 8px 0;
+}
+
+.calendar-cells-container {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 1px;
+  grid-auto-rows: minmax(80px, auto);
+  position: relative;
+}
+
+.calendar-cell {
+  border: 1px solid hsl(var(--border));
+  padding: 4px;
+  min-height: 80px;
+  position: relative;
+}
+
+.calendar-cell-inactive {
+  background-color: hsl(var(--muted) / 0.1);
+}
+
+.calendar-cell-today {
+  background-color: hsl(var(--primary) / 0.1);
+  border-color: hsl(var(--primary));
+}
+
+.calendar-date-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 4px;
+}
+
+/* イベントコンテナを修正 - heightを0から適切な値に変更 */
+.calendar-events-container {
+  position: absolute;
+  top: 35px; /* 曜日ヘッダーの高さに合わせて調整 */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: calc(100% - 35px); /* 高さを適切に確保 */
+  pointer-events: none; /* コンテナ自体はクリックを通過させる */
+  z-index: 5;
+}
+
+.calendar-event-bar {
+  position: absolute;
+  z-index: 10;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.75rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  color: white;
+  pointer-events: auto; /* イベントバー自体はクリック可能に */
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .calendar-cells-container {
+    grid-auto-rows: minmax(60px, auto);
+  }
+  
+  .calendar-cell {
+    min-height: 60px;
+  }
+  
+  .calendar-event-bar {
+    font-size: 0.65rem;
+    padding: 1px 2px;
+  }
+}
+
