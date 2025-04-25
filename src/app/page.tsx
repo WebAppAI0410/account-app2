@@ -110,7 +110,7 @@ export default function Home() {
         <SidebarHeader>
           <div className="flex items-center space-x-2">
             <Icons.coins className="h-6 w-6" />
-            <h4 className="font-semibold text-md">{t('EventBalance')}</h4>
+            <h4 className="font-semibold text-md">メニュー</h4>
           </div>
         </SidebarHeader>
         <SidebarContent>
