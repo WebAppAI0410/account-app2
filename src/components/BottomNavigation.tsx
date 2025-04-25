@@ -75,8 +75,9 @@ export function BottomNavigation() {
     <>
       <nav
         className={cn(
-          'fixed left-0 w-full z-40 flex justify-around items-center bg-white border-t border-gray-200 shadow-sm transition-all',
+          'fixed left-0 w-full z-40 flex justify-around items-center border-t border-gray-200 shadow-sm transition-all',
           'h-[56px] md:h-[64px]',
+          'bg-white dark:bg-gray-900', // ダークモード時の背景
         )}
         style={{
           bottom: `calc(${bottomPx}px + env(safe-area-inset-bottom, 0px))`,
@@ -87,7 +88,10 @@ export function BottomNavigation() {
           <Button
             key={tab.path}
             variant={pathname === tab.path ? 'default' : 'ghost'}
-            className="flex-1 flex flex-col items-center justify-center rounded-none h-full"
+            className={cn(
+              'flex-1 flex flex-col items-center justify-center rounded-none h-full',
+              pathname !== tab.path && 'bg-white dark:bg-gray-900 dark:text-gray-200 hover:dark:bg-gray-800',
+            )}
             onClick={() => handleTabClick(tab)}
             aria-current={pathname === tab.path ? 'page' : undefined}
             style={{
