@@ -8,7 +8,7 @@ import { useSubscription } from '@/context/SubscriptionContext';
 import { useRouter } from 'next/navigation';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
-import { parseISO, isSameMonth } from 'date-fns';
+import { parseISO, isSameMonth, format, isSameDay, isWithinInterval } from 'date-fns';
 import {
   Card,
   CardContent,
@@ -35,12 +35,11 @@ interface CalendarEvent {
   eventId: string;
 }
 
-// 改良版カレンダーコンポーネント
+// 改良版カレンダー(月表示)コンポーネント
 const EnhancedCalendar: React.FC<{
   events: CalendarEvent[];
   onEventClick: (eventId: string) => void;
-  view: 'month' | 'week' | 'day';
-}> = ({ events, onEventClick, view }) => {
+}> = ({ events, onEventClick }) => {
   const { t } = useTranslation();
   const { 
     currentDate,
@@ -136,23 +135,23 @@ const EnhancedCalendar: React.FC<{
   };
   
   return (
-    <div className="calendar-container relative pb-16"> {/* 相対位置指定を追加 */}
+    <div className="calendar-container relative pb-16">
       {/* 月切替ヘッダー */}
       <div className="flex justify-between items-center mb-4">
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" onClick={prevMonth}>
             <Icons.chevronLeft className="h-4 w-4" />
-            <span className="sr-only">{t('Previous Month')}</span>
+            <span className="sr-only">{t('previous_month')}</span>
           </Button>
           <h3 className="font-medium">{formattedMonth}</h3>
           <Button variant="ghost" size="icon" onClick={nextMonth}>
             <Icons.chevronRight className="h-4 w-4" />
-            <span className="sr-only">{t('Next Month')}</span>
+            <span className="sr-only">{t('next_month')}</span>
           </Button>
         </div>
       </div>
       
-      <div className="calendar-grid relative"> {/* 相対位置指定を追加 */}
+      <div className="calendar-grid relative">
         {/* 曜日ヘッダー */}
         <div className="calendar-days-header">
           {['日', '月', '火', '水', '木', '金', '土'].map((day, index) => (
@@ -199,10 +198,198 @@ const EnhancedCalendar: React.FC<{
           {renderEventBars()}
         </div>
       </div>
+    </div>
+  );
+};
+
+// 週表示カレンダーコンポーネント
+const EnhancedWeekCalendar: React.FC<{
+  events: CalendarEvent[];
+  onEventClick: (eventId: string) => void;
+}> = ({ events, onEventClick }) => {
+  const { t } = useTranslation();
+  const { 
+    currentDate,
+    formattedWeek,
+    weekDays,
+    prevWeek,
+    nextWeek,
+    calculateEventPosition
+  } = useCalendar('week');
+  
+  // この週に表示するイベントをフィルタリング
+  const visibleEvents = events.filter(event => {
+    const startDate = parseISO(event.start);
+    const endDate = parseISO(event.end);
+    
+    // 週の日付範囲と重なるイベントを表示
+    return weekDays.some(day => 
+      isWithinInterval(day.date, { start: startDate, end: endDate }) ||
+      isWithinInterval(startDate, { start: day.date, end: day.date }) ||
+      isWithinInterval(endDate, { start: day.date, end: day.date })
+    );
+  });
+  
+  // イベントバーを描画
+  const renderWeekEventBars = () => {
+    const eventHeight = 22;
+    const eventMargin = 2;
+    const cellWidth = 100 / 7;
+    
+    return visibleEvents.flatMap((event, eventIndex) => {
+      const startDate = parseISO(event.start);
+      const endDate = parseISO(event.end);
       
-      {/* カレンダービューモード */}
-      <div className="mt-4 text-sm text-center text-muted-foreground">
-        {t('Calendar view mode')}: {view === 'month' ? t('Month') : view === 'week' ? t('Week') : t('Day')}
+      // 週表示用の位置計算
+      const position = calculateEventPosition(startDate, endDate);
+      
+      if (!position || position.span === undefined || position.span <= 0) return null;
+      
+      const verticalOffset = (eventIndex % 5) * (eventHeight + eventMargin);
+      
+      return (
+        <div
+          key={`week-${event.id}`}
+          className="week-calendar-event"
+          style={{
+            backgroundColor: event.backgroundColor,
+            borderColor: event.borderColor,
+            top: `${40 + verticalOffset}px`,
+            left: `${position.startCol * cellWidth}%`,
+            width: `${position.span * cellWidth - 1}%`,
+            height: `${eventHeight}px`,
+          }}
+          onClick={() => onEventClick(event.eventId)}
+          title={event.title}
+        >
+          {event.title}
+        </div>
+      );
+    });
+  };
+  
+  return (
+    <div className="week-calendar-container">
+      {/* 週切替ヘッダー */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={prevWeek}>
+            <Icons.chevronLeft className="h-4 w-4" />
+            <span className="sr-only">{t('previous_week')}</span>
+          </Button>
+          <h3 className="font-medium">{formattedWeek}</h3>
+          <Button variant="ghost" size="icon" onClick={nextWeek}>
+            <Icons.chevronRight className="h-4 w-4" />
+            <span className="sr-only">{t('next_week')}</span>
+          </Button>
+        </div>
+      </div>
+      
+      {/* 曜日ヘッダー */}
+      <div className="week-calendar-header">
+        {['日', '月', '火', '水', '木', '金', '土'].map((day, index) => (
+          <div key={day} className={`${index === 0 ? 'text-red-500' : ''}`}>
+            {day}
+          </div>
+        ))}
+      </div>
+      
+      {/* 週グリッド */}
+      <div className="week-calendar-grid">
+        {weekDays.map((day, index) => {
+          const isToday = day.isToday;
+          const isOtherMonth = !day.isCurrentMonth;
+          
+          return (
+            <div
+              key={`week-day-${index}`}
+              className={`week-calendar-day ${isToday ? 'week-calendar-day-today' : ''} ${isOtherMonth ? 'week-calendar-day-othermonth' : ''}`}
+            >
+              <div className={`week-calendar-day-header ${index === 0 ? 'text-red-500' : ''}`}>
+                {format(day.date, 'M/d')}
+              </div>
+            </div>
+          );
+        })}
+        
+        {/* イベントバー（絶対配置でオーバーレイ） */}
+        <div className="week-calendar-event-container">
+          {renderWeekEventBars()}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 日表示カレンダーコンポーネント
+const EnhancedDayCalendar: React.FC<{
+  events: CalendarEvent[];
+  onEventClick: (eventId: string) => void;
+}> = ({ events, onEventClick }) => {
+  const { t } = useTranslation();
+  const { 
+    currentDate,
+    formattedDay,
+    prevDay,
+    nextDay,
+  } = useCalendar('day');
+  
+  // この日に表示するイベントをフィルタリング
+  const visibleEvents = events.filter(event => {
+    const startDate = parseISO(event.start);
+    const endDate = parseISO(event.end);
+    
+    // 選択日と重なるイベントを表示
+    return (
+      (startDate <= currentDate && endDate >= currentDate) || 
+      isSameDay(startDate, currentDate) || 
+      isSameDay(endDate, currentDate)
+    );
+  });
+  
+  return (
+    <div className="day-calendar-container">
+      {/* 日付切替ヘッダー */}
+      <div className="flex justify-between items-center mb-4">
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={prevDay}>
+            <Icons.chevronLeft className="h-4 w-4" />
+            <span className="sr-only">{t('previous_day')}</span>
+          </Button>
+          <h3 className="font-medium">{formattedDay}</h3>
+          <Button variant="ghost" size="icon" onClick={nextDay}>
+            <Icons.chevronRight className="h-4 w-4" />
+            <span className="sr-only">{t('next_day')}</span>
+          </Button>
+        </div>
+      </div>
+      
+      {/* イベントリスト表示 */}
+      <div className="day-calendar-events">
+        <h4 className="text-sm font-medium mb-4">{t('events')}</h4>
+        
+        {visibleEvents.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('no_events_for_day')}</p>
+        ) : (
+          <div className="space-y-2">
+            {visibleEvents.map(event => (
+              <div
+                key={`day-event-${event.id}`}
+                className="day-calendar-event"
+                style={{
+                  backgroundColor: event.backgroundColor,
+                  borderColor: event.borderColor
+                }}
+                onClick={() => onEventClick(event.eventId)}
+              >
+                <div className="font-medium">{event.title}</div>
+                <div className="text-xs mt-1">
+                  {format(parseISO(event.start), 'yyyy/MM/dd')} - {format(parseISO(event.end), 'yyyy/MM/dd')}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -240,33 +427,64 @@ export default function CalendarPage() {
   const handleEventClick = (eventId: string) => {
     router.push(`/events/${eventId}`);
   };
+  
+  // 表示モードの切替
+  const handleViewChange = (view: 'month' | 'week' | 'day') => {
+    setCalendarView(view);
+  };
+  
+  // 今日ボタンの処理
+  const handleGoToToday = () => {
+    // 現在のカレンダーフックインスタンスはコンポーネント内で作成されるため、ここでは新たにページをリロードする
+    setIsClient(false);
+    setTimeout(() => setIsClient(true), 0);
+  };
 
   // SSR対応のためにクライアントサイドレンダリングを確認
   if (!isClient) {
     return null;
   }
 
+  // 現在のビューに応じたカレンダーコンポーネントをレンダリング
+  const renderCalendarView = () => {
+    switch (calendarView) {
+      case 'month':
+        return <EnhancedCalendar events={calendarEvents} onEventClick={handleEventClick} />;
+      case 'week':
+        return <EnhancedWeekCalendar events={calendarEvents} onEventClick={handleEventClick} />;
+      case 'day':
+        return <EnhancedDayCalendar events={calendarEvents} onEventClick={handleEventClick} />;
+      default:
+        return <EnhancedCalendar events={calendarEvents} onEventClick={handleEventClick} />;
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen">
       <PageHeader
-        title={t('Calendar')}
-        description={t('View your event collection periods')}
+        title={t('calendar')}
+        description={t('calendar_description')}
       />
       
       <div className="flex-1 p-4 space-y-4 pb-[60px] md:pb-[100px]">
-        {/* 表示モード切替 */}
-        <div className="flex justify-end">
+        {/* 表示モード切替と今日ボタン */}
+        <div className="flex justify-between items-center">
+          <Button variant="outline" size="sm" onClick={handleGoToToday}>
+            <Icons.calendar className="h-4 w-4 mr-1" />
+            {t('today')}
+          </Button>
+          
           <Select
             value={calendarView}
-            onValueChange={(value: any) => setCalendarView(value)}
+            onValueChange={(value: any) => handleViewChange(value)}
           >
             <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder={t('View')} />
+              <SelectValue placeholder={t('view')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="month">{t('Month')}</SelectItem>
-              <SelectItem value="week">{t('Week')}</SelectItem>
-              <SelectItem value="day">{t('Day')}</SelectItem>
+              <SelectItem value="month">{t('month')}</SelectItem>
+              <SelectItem value="week">{t('week')}</SelectItem>
+              <SelectItem value="day">{t('day')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -274,22 +492,18 @@ export default function CalendarPage() {
         {/* カレンダー表示部分 */}
         <Card>
           <CardContent className="pt-6">
-            <EnhancedCalendar 
-              events={calendarEvents} 
-              onEventClick={handleEventClick} 
-              view={calendarView} 
-            />
+            {renderCalendarView()}
           </CardContent>
         </Card>
         
         {/* 凡例 */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm">{t('Legend')}</CardTitle>
+            <CardTitle className="text-sm">{t('legend')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-xs text-muted-foreground">
-              {t('Each color represents a different event. Click on an event to view details.')}
+              {t('legend_description')}
             </div>
           </CardContent>
         </Card>

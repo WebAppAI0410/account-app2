@@ -88,5 +88,22 @@
   "Premium Plan": "プレミアムプラン",
   "Feature Comparison": "機能比較",
   "Pricing": "料金",
-  "Feature": "機能"
+  "Feature": "機能",
+  "calendar": "カレンダー",
+  "calendar_description": "イベントの集金期間をカレンダーで確認できます",
+  "today": "今日",
+  "view": "表示",
+  "month": "月",
+  "week": "週",
+  "day": "日",
+  "legend": "凡例",
+  "legend_description": "各色は異なるイベントを表します。イベントをクリックすると詳細を表示します。",
+  "events": "イベント",
+  "no_events_for_day": "この日にイベントはありません",
+  "previous_month": "前の月",
+  "next_month": "次の月",
+  "previous_week": "前の週",
+  "next_week": "次の週",
+  "previous_day": "前の日",
+  "next_day": "次の日"
 }

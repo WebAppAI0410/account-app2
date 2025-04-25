@@ -16,7 +16,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
-export default function BottomNavigation() {
+export function BottomNavigation() {
   const pathname = usePathname();
   const router = useRouter();
   const { t } = useTranslation();

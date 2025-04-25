@@ -7,7 +7,7 @@ import { SubscriptionProvider } from '@/context/SubscriptionContext';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from "@/components/ui/toaster";
 import AdBannerManagerClient from '@/app/AdBannerManagerClient'; 
-import BottomNavigation from '@/components/BottomNavigation';
+import { BottomNavigation } from '@/components/BottomNavigation';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
