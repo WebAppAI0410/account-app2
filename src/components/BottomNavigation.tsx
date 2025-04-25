@@ -16,6 +16,10 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+// 広告バナーの高さ（px）
+const BANNER_HEIGHT = 50; // モバイル
+const BANNER_HEIGHT_MD = 90; // md以上
+
 export function BottomNavigation() {
   const pathname = usePathname();
   const router = useRouter();
@@ -56,76 +60,63 @@ export function BottomNavigation() {
     router.push('/plans');
   };
 
+  // mdサイズでバナー高さを切り替え
+  const [bottomPx, setBottomPx] = React.useState(BANNER_HEIGHT);
+  React.useEffect(() => {
+    const updateBottom = () => {
+      if (window.innerWidth >= 768) {
+        setBottomPx(BANNER_HEIGHT_MD);
+      } else {
+        setBottomPx(BANNER_HEIGHT);
+      }
+    };
+    updateBottom();
+    window.addEventListener('resize', updateBottom);
+    return () => window.removeEventListener('resize', updateBottom);
+  }, []);
+
   return (
     <>
-      <div className="fixed bottom-0 left-0 right-0 h-12 md:h-14 bg-background border-t border-border flex justify-around items-center z-40 pb-safe">
-        {tabs.map((tab) => {
-          const isActive = pathname === tab.path;
-          return (
-            <Button
-              key={tab.path}
-              variant="ghost"
-              size="sm"
-              className={cn(
-                "flex-1 h-full rounded-none flex flex-col items-center justify-center gap-1 py-1",
-                isActive && "bg-accent text-accent-foreground",
-                tab.isPremium && !isPremium && "text-muted-foreground"
-              )}
-              onClick={() => handleTabClick(tab)}
-            >
-              <div className="relative">
-                {tab.icon}
-                {tab.isPremium && !isPremium && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-primary"></div>
-                )}
-              </div>
-              <span className="text-[10px]">{tab.name}</span>
-            </Button>
-          );
-        })}
-      </div>
-
-      {/* プレミアム機能制限ダイアログ */}
+      <nav
+        className={cn(
+          'fixed left-0 w-full z-40 flex justify-around items-center bg-white border-t border-gray-200 shadow-sm transition-all',
+          'h-[56px] md:h-[64px]',
+        )}
+        style={{
+          bottom: `calc(${bottomPx}px + env(safe-area-inset-bottom, 0px))`,
+        }}
+        aria-label="ボトムナビゲーション"
+      >
+        {tabs.map((tab) => (
+          <Button
+            key={tab.path}
+            variant={pathname === tab.path ? 'default' : 'ghost'}
+            className="flex-1 flex flex-col items-center justify-center rounded-none h-full"
+            onClick={() => handleTabClick(tab)}
+            aria-current={pathname === tab.path ? 'page' : undefined}
+            style={{
+              opacity: 1,
+              pointerEvents: 'auto',
+              visibility: 'visible',
+            }}
+          >
+            {tab.icon}
+            <span className="text-xs mt-1">{tab.name}</span>
+          </Button>
+        ))}
+      </nav>
+      {/* プレミアム誘導ダイアログ */}
       <Dialog open={showPremiumDialog} onOpenChange={setShowPremiumDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle className="flex items-center">
-              <Icons.star className="h-5 w-5 mr-2 text-yellow-500" />
-              {t('Premium Feature')}
-            </DialogTitle>
+            <DialogTitle>{t('プレミアム機能のご案内')}</DialogTitle>
             <DialogDescription>
-              {t('This calendar feature is available only for premium users. Upgrade to access all features.')}
+              {t('この機能はプレミアムプラン限定です。アップグレードするとご利用いただけます。')}
             </DialogDescription>
           </DialogHeader>
-          <div className="py-4">
-            <div className="flex justify-center mb-4">
-              <Icons.calendar className="h-16 w-16 text-muted-foreground" />
-            </div>
-            <p className="text-sm text-center text-muted-foreground mb-2">
-              {t('Calendar view allows you to visualize all your event collection periods.')}
-            </p>
-            <ul className="text-sm space-y-2 mb-4">
-              <li className="flex items-center">
-                <Icons.check className="h-4 w-4 mr-2 text-green-500" />
-                {t('Monthly, weekly and daily views')}
-              </li>
-              <li className="flex items-center">
-                <Icons.check className="h-4 w-4 mr-2 text-green-500" />
-                {t('Collection period visualization')}
-              </li>
-              <li className="flex items-center">
-                <Icons.check className="h-4 w-4 mr-2 text-green-500" />
-                {t('Quick navigation to events')}
-              </li>
-            </ul>
-          </div>
-          <DialogFooter className="sm:justify-between">
-            <Button variant="outline" onClick={() => setShowPremiumDialog(false)}>
-              {t('Close')}
-            </Button>
-            <Button onClick={handleUpgrade}>
-              {t('Upgrade to Premium')}
-            </Button>
+          <DialogFooter>
+            <Button onClick={() => router.push('/plans')}>{t('アップグレード')}</Button>
+            <Button variant="ghost" onClick={() => setShowPremiumDialog(false)}>{t('閉じる')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

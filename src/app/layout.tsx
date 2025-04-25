@@ -42,14 +42,12 @@ export default function RootLayout({
               <EventsProvider>
                {/* Main content container */}
                <div className="flex flex-col min-h-screen">
-                 {/* Content area with dynamic padding for the ad banner space */}
-                 <div className="flex-1 pb-[60px] md:pb-[100px] relative z-10"> {/* Added z-10 to keep content above ad */}
+                 {/* Content area with dynamic padding for the ad banner space and BottomNavigation */}
+                 <div className="flex-1 pb-[116px] md:pb-[154px] relative z-10"> {/* 56+60, 64+90 */}
                    {children}
                  </div>
-                 
                  {/* BottomNavigation */}
                  <BottomNavigation />
-                 
                  {/* Ad Banner is now self-contained with fixed positioning */}
                  <AdBannerManagerClient />
                </div>
