@@ -161,7 +161,7 @@ export default function Home() {
         <SidebarFooter>
           <Separator />
           <div className="p-2">
-            <Button variant="secondary" onClick={() => setIsCreateEventOpen(true)} className="w-full">
+            <Button variant="default" onClick={() => setIsCreateEventOpen(true)} className="w-full">
               <Icons.plus className="mr-2 h-4 w-4" />
               {t('Create Event')}
             </Button>
