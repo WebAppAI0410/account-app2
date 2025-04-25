@@ -75,21 +75,13 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({ children }) => {
    const initialEventsData: Event[] = [
     {
       id: '1',
-      name: '飲み会', // Use direct string
+      name: '飲み会',
       date: '2025/3/25',
-      description: '4/3の新歓用', // Use direct string
+      description: '4/3の新歓用',
       collectionStartDate: '2025-03-25',
       collectionEndDate: '2025-04-03',
-      participants: [
-        // サンプルデータに不足しているプロパティを追加
-        { id: 'p1', name: '山田太郎', email: 'yamada@example.com', amountOwed: 5000, amountPaid: 5000, isPaid: true, paymentDueDate: new Date('2025-04-01') },
-        { id: 'p2', name: '佐藤次郎', email: 'sato@example.com', amountOwed: 4000, amountPaid: 0, isPaid: false, paymentDueDate: new Date('2025-04-03') }
-      ],
-      expenses: [
-        // name を description に変更し、不足プロパティを追加
-        { id: 'e1', description: '会場費', amount: 10000, remarks: '前払い', isPaid: true },
-        { id: 'e2', description: '飲食費', amount: 30000, remarks: '当日払い', isPaid: false }
-      ]
+      participants: [], // 参加者例を削除
+      expenses: []      // 費用項目例を削除
     },
   ];
 
