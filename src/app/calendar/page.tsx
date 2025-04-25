@@ -547,7 +547,6 @@ export default function CalendarPage() {
           <PageHeader
             title={t('calendar')}
             description={t('calendar_description')}
-            onMenuClick={toggleSidebar}
           />
           {/* 表示モード切替と今日ボタン */}
           <div className="flex justify-between items-center">
