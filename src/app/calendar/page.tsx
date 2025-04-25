@@ -473,7 +473,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <SidebarProvider>
+    <SidebarProvider defaultOpen={false}>
       <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] min-h-screen relative overflow-x-hidden">
         {/* ハンバーガーメニューボタン */}
         <div className="fixed top-4 right-4 z-50">
