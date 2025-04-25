@@ -54,17 +54,13 @@ export function BottomNavigation() {
     }
   };
 
-  // プランページへ移動
-  const handleUpgrade = () => {
-    setShowPremiumDialog(false);
-    router.push('/plans');
-  };
-
-  // mdサイズでバナー高さを切り替え
-  const [bottomPx, setBottomPx] = React.useState(BANNER_HEIGHT);
+  // mdサイズでバナー高さを切り替え。有料プランなら0。
+  const [bottomPx, setBottomPx] = React.useState(isPremium ? 0 : BANNER_HEIGHT);
   React.useEffect(() => {
     const updateBottom = () => {
-      if (window.innerWidth >= 768) {
+      if (isPremium) {
+        setBottomPx(0);
+      } else if (window.innerWidth >= 768) {
         setBottomPx(BANNER_HEIGHT_MD);
       } else {
         setBottomPx(BANNER_HEIGHT);
@@ -73,7 +69,7 @@ export function BottomNavigation() {
     updateBottom();
     window.addEventListener('resize', updateBottom);
     return () => window.removeEventListener('resize', updateBottom);
-  }, []);
+  }, [isPremium]);
 
   return (
     <>
@@ -115,7 +111,10 @@ export function BottomNavigation() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button onClick={() => router.push('/plans')}>{t('アップグレード')}</Button>
+            <Button onClick={() => {
+              setShowPremiumDialog(false);
+              router.push('/plans');
+            }}>{t('アップグレード')}</Button>
             <Button variant="ghost" onClick={() => setShowPremiumDialog(false)}>{t('閉じる')}</Button>
           </DialogFooter>
         </DialogContent>
