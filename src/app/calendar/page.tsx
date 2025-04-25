@@ -23,6 +23,18 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCalendar } from '@/hooks/useCalendar';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarTrigger,
+  SidebarProvider,
+  useSidebar,
+} from '@/components/ui/sidebar';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 // カレンダーイベントの型定義
 interface CalendarEvent {
@@ -402,6 +414,7 @@ export default function CalendarPage() {
   const { isPremium } = useSubscription();
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day'>('month');
   const [isClient, setIsClient] = useState(false);
+  const { toggleSidebar, state } = useSidebar();
 
   useEffect(() => {
     setIsClient(true);
@@ -460,54 +473,121 @@ export default function CalendarPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen">
-      <PageHeader
-        title={t('calendar')}
-        description={t('calendar_description')}
-      />
-      
-      <div className="flex-1 p-4 space-y-4 pb-[60px] md:pb-[100px]">
-        {/* 表示モード切替と今日ボタン */}
-        <div className="flex justify-between items-center">
-          <Button variant="outline" size="sm" onClick={handleGoToToday}>
-            <Icons.calendar className="h-4 w-4 mr-1" />
-            {t('today')}
-          </Button>
-          
-          <Select
-            value={calendarView}
-            onValueChange={(value: any) => handleViewChange(value)}
+    <SidebarProvider>
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] min-h-screen relative overflow-x-hidden">
+        {/* ハンバーガーメニューボタン */}
+        <div className="fixed top-4 right-4 z-50">
+          <SidebarTrigger
+            className="bg-background/80 backdrop-blur-sm"
+            aria-label={t('Open Menu')}
+            aria-expanded={state === "expanded"}
+            aria-controls="sidebar-content"
           >
-            <SelectTrigger className="w-[120px]">
-              <SelectValue placeholder={t('view')} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="month">{t('month')}</SelectItem>
-              <SelectItem value="week">{t('week')}</SelectItem>
-              <SelectItem value="day">{t('day')}</SelectItem>
-            </SelectContent>
-          </Select>
+            <Icons.menu className="h-5 w-5" />
+            <span className="sr-only">メニューを開く</span>
+          </SidebarTrigger>
         </div>
-        
-        {/* カレンダー表示部分 */}
-        <Card>
-          <CardContent className="pt-6">
-            {renderCalendarView()}
-          </CardContent>
-        </Card>
-        
-        {/* 凡例 */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-sm">{t('legend')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs text-muted-foreground">
-              {t('legend_description')}
+        {/* サイドバー */}
+        <Sidebar side="right" id="sidebar-content">
+          <SidebarHeader>
+            <div className="flex items-center space-x-2">
+              <Icons.coins className="h-6 w-6" />
+              <h4 className="font-semibold text-md">{t('EventBalance')}</h4>
             </div>
-          </CardContent>
-        </Card>
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarTrigger>
+                  <Icons.list className="mr-2 h-4 w-4" />
+                  <span>{t('Events')}</span>
+                </SidebarTrigger>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <div className="flex justify-between items-center w-full px-3 py-2">
+                  <div className="flex items-center">
+                    <Icons.dark className="mr-2 h-4 w-4" />
+                    <span>{t('Theme')}</span>
+                  </div>
+                  <ThemeToggle />
+                </div>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => router.push('/how-to')}
+                >
+                  <Icons.help className="mr-2 h-4 w-4" />
+                  <span>{t('How to Use')}</span>
+                </Button>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start"
+                  onClick={() => router.push('/plans')}
+                >
+                  <Icons.creditCard className="mr-2 h-4 w-4" />
+                  <span>{t('Plans')}</span>
+                </Button>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter>
+            <div className="p-2">
+              <Button variant="secondary" className="w-full">
+                <Icons.plus className="mr-2 h-4 w-4" />
+                {t('Create Event')}
+              </Button>
+            </div>
+          </SidebarFooter>
+        </Sidebar>
+        <main className="w-full p-4 space-y-4 transition-all duration-300 ease-in-out max-w-full" style={{transitionProperty: 'width, margin', transform: 'translateZ(0)', willChange: 'width, margin'}} aria-label="カレンダー">
+          <PageHeader
+            title={t('calendar')}
+            description={t('calendar_description')}
+            onMenuClick={toggleSidebar}
+          />
+          {/* 表示モード切替と今日ボタン */}
+          <div className="flex justify-between items-center">
+            <Button variant="outline" size="sm" onClick={handleGoToToday}>
+              <Icons.calendar className="h-4 w-4 mr-1" />
+              {t('today')}
+            </Button>
+            <Select
+              value={calendarView}
+              onValueChange={(value: any) => handleViewChange(value)}
+            >
+              <SelectTrigger className="w-[120px]">
+                <SelectValue placeholder={t('view')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="month">{t('month')}</SelectItem>
+                <SelectItem value="week">{t('week')}</SelectItem>
+                <SelectItem value="day">{t('day')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {/* カレンダー表示部分 */}
+          <Card>
+            <CardContent className="pt-6">
+              {renderCalendarView()}
+            </CardContent>
+          </Card>
+          {/* 凡例 */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm">{t('legend')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-xs text-muted-foreground">
+                {t('legend_description')}
+              </div>
+            </CardContent>
+          </Card>
+        </main>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

@@ -9,13 +9,14 @@ import useTranslation from '@/hooks/use-translation'
 interface PageHeaderProps {
   title: string
   description?: string
+  onMenuClick?: () => void // メニュー用のコールバックを追加
 }
 
 /**
  * ページのヘッダーコンポーネント
  * 戻るボタンとページタイトルを表示する
  */
-export function PageHeader({ title, description }: PageHeaderProps) {
+export function PageHeader({ title, description, onMenuClick }: PageHeaderProps) {
   const router = useRouter()
   const { t } = useTranslation()
 
@@ -37,6 +38,17 @@ export function PageHeader({ title, description }: PageHeaderProps) {
           {description && <p className="text-sm text-muted-foreground">{description}</p>}
         </div>
       </div>
+      {onMenuClick && (
+        <Button
+          onClick={onMenuClick}
+          variant="ghost"
+          size="icon"
+          aria-label={t('Toggle Menu')}
+        >
+          <Icons.menu className="h-5 w-5" />
+          <span className="sr-only">{t('Toggle Menu')}</span>
+        </Button>
+      )}
     </div>
   )
 }
