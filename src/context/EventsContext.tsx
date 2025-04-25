@@ -18,18 +18,23 @@ interface Event {
 }
 
 // 参加者の型定義
-interface Participant {
+export interface Participant { // export を追加
   id: string;
   name: string;
-  // その他の参加者情報
+  email?: string;
+  amountOwed: number;
+  amountPaid: number;
+  paymentDueDate?: Date;
+  isPaid: boolean;
 }
 
 // 費用項目の型定義
-interface ExpenseItem {
+export interface ExpenseItem { // export を追加
   id: string;
-  name: string;
+  description: string;
   amount: number;
-  // その他の費用項目情報
+  remarks?: string;
+  isPaid: boolean;
 }
 
 // Define the shape of the context data
@@ -71,17 +76,19 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({ children }) => {
     {
       id: '1',
       name: '飲み会', // Use direct string
-      date: '2025/3/25', 
+      date: '2025/3/25',
       description: '4/3の新歓用', // Use direct string
       collectionStartDate: '2025-03-25',
       collectionEndDate: '2025-04-03',
       participants: [
-        { id: 'p1', name: '山田太郎' },
-        { id: 'p2', name: '佐藤次郎' }
+        // サンプルデータに不足しているプロパティを追加
+        { id: 'p1', name: '山田太郎', email: 'yamada@example.com', amountOwed: 5000, amountPaid: 5000, isPaid: true, paymentDueDate: new Date('2025-04-01') },
+        { id: 'p2', name: '佐藤次郎', email: 'sato@example.com', amountOwed: 4000, amountPaid: 0, isPaid: false, paymentDueDate: new Date('2025-04-03') }
       ],
       expenses: [
-        { id: 'e1', name: '会場費', amount: 10000 },
-        { id: 'e2', name: '飲食費', amount: 30000 }
+        // name を description に変更し、不足プロパティを追加
+        { id: 'e1', description: '会場費', amount: 10000, remarks: '前払い', isPaid: true },
+        { id: 'e2', description: '飲食費', amount: 30000, remarks: '当日払い', isPaid: false }
       ]
     },
   ];
@@ -173,6 +180,12 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({ children }) => {
 
     const participantWithId: Participant = {
       ...participant,
+      // 必須プロパティをデフォルト値で補完 (Context側で型安全性を担保)
+      email: participant.email || undefined,
+      amountOwed: participant.amountOwed || 0,
+      amountPaid: participant.amountPaid || 0,
+      paymentDueDate: participant.paymentDueDate || undefined,
+      isPaid: participant.isPaid || false,
       id: `p-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     };
 
@@ -222,6 +235,11 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({ children }) => {
 
     const expenseWithId: ExpenseItem = {
       ...expense,
+      // 必須プロパティをデフォルト値で補完
+      description: expense.description || '', // name から変更
+      amount: expense.amount || 0,
+      remarks: expense.remarks || undefined,
+      isPaid: expense.isPaid || false,
       id: `e-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
     };
 

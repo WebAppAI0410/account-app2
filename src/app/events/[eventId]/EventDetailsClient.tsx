@@ -17,7 +17,7 @@ import { Icons } from '@/components/icons';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogTitle, AlertDialogFooter, AlertDialogHeader } from '@/components/ui/alert-dialog';
 import { Checkbox } from '@/components/ui/checkbox';
 import useTranslation from '@/hooks/use-translation';
-import { useEvents } from '@/context/EventsContext';
+import { useEvents, Participant, ExpenseItem } from '@/context/EventsContext'; // Participant, ExpenseItem をインポート
 import { Textarea } from '@/components/ui/textarea';
 import { CalendarIcon } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
@@ -34,8 +34,6 @@ interface Event {
 
 // Other interfaces
 interface EventDetailsProps { params: { eventId: string; }; } // Keep this prop definition
-interface Participant { id: string; name: string; email?: string; amountOwed: number; amountPaid: number; paymentDueDate: Date | undefined; isPaid: boolean; }
-interface Expense { id: string; description: string; amount: number; remarks?: string; isPaid: boolean; }
 
 // Helper function (keep as it is)
 const formatSimpleDate = (dateStr: string | Date | undefined): string => {
@@ -63,7 +61,7 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
   
   const router = useRouter();
   const { t } = useTranslation();
-  const { events, updateEvent } = useEvents();
+  const { events, updateEvent, addParticipant, deleteParticipant, addExpenseItem, deleteExpenseItem } = useEvents();
   
   // Log initial state to help diagnose issues
   console.log('Events from context:', events?.map(e => ({id: e.id, name: e.name})));
@@ -102,11 +100,6 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
   const [editedEndDate, setEditedEndDate] = useState<Date | undefined>(undefined);
 
   // Participants/Expenses state
-  // 修正：useMemoを使って初期値をSSR時にも安定させる
-  const initialParticipants = useMemo(() => [], []);
-  const initialExpenses = useMemo(() => [], []);
-  const [participants, setParticipants] = useState<Participant[]>(initialParticipants);
-  const [expenses, setExpenses] = useState<Expense[]>(initialExpenses);
   const [newParticipantName, setNewParticipantName] = useState('');
   const [newParticipantEmail, setNewParticipantEmail] = useState('');
   const [newParticipantAmountOwed, setNewParticipantAmountOwed] = useState('');
@@ -115,12 +108,10 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
   const [newExpenseRemarks, setNewExpenseRemarks] = useState('');
   const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
   const [selectedExpenseId, setSelectedExpenseId] = useState<string | null>(null);
-  const [paymentDueDate, setPaymentDueDate] = useState<Date | undefined>(undefined);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isExpenseDeleteDialogOpen, setIsExpenseDeleteDialogOpen] = useState(false);
   const [isAddParticipantDialogOpen, setIsAddParticipantDialogOpen] = useState(false);
   const [isAddExpenseDialogOpen, setIsAddExpenseDialogOpen] = useState(false);
-  const [amountPaidManually, setAmountPaidManually] = useState<Record<string, string>>({});
 
   // 反復処理確認ダイアログの状態
   const [isContinueDialogOpen, setIsContinueDialogOpen] = useState(false);
@@ -151,13 +142,6 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
       // Use safe parsing function
       setEditedStartDate(parseDateString(currentEvent.collectionStartDate));
       setEditedEndDate(parseDateString(currentEvent.collectionEndDate));
-      
-      // サーバー/クライアント間の不一致を避けるため、useEffectの初回実行時のみ初期化
-      if (typeof window !== 'undefined') {
-        // クライアントサイドでのみ実行
-        setParticipants(prev => prev.length === 0 ? [] : prev); // 空の場合のみリセット
-        setExpenses(prev => prev.length === 0 ? [] : prev); // 空の場合のみリセット
-      }
     }
   }, [currentEvent]);
 
@@ -186,129 +170,114 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
   };
 
   // --- Handlers ---
-  const handleAmountPaidChange = (participantId: string, value: string) => {
-    setAmountPaidManually({...amountPaidManually, [participantId]: value});
+  const handlePaymentStatusChange = (id: string, checked: boolean) => {
+    if (!eventId) return;
+    const updatedParticipants = participants.map(p =>
+      p.id === id ? { ...p, isPaid: checked, amountPaid: checked ? p.amountOwed : 0 } : p
+    );
+    updateEvent(eventId, { participants: updatedParticipants });
   };
 
-  // 修正：participantsを依存配列から削除して無限ループを回避
-  useEffect(() => {
-    if (participants.length > 0) {
-      setParticipants(prev => prev.map(p => {
-        const manualAmountStr = amountPaidManually[p.id];
-        if (manualAmountStr !== undefined) {
-          const manualAmountNum = parseFloat(manualAmountStr);
-          return { ...p, amountPaid: !isNaN(manualAmountNum) ? manualAmountNum : p.amountPaid };
-        }
-        return p;
-      }));
-    }
-  }, [amountPaidManually]); // participantsを依存配列から削除
+  const handleExpensePaymentStatusChange = (id: string, checked: boolean) => {
+    if (!eventId) return;
+    const updatedExpenses = expenses.map(e =>
+      e.id === id ? { ...e, isPaid: checked } : e
+    );
+    updateEvent(eventId, { expenses: updatedExpenses });
+  };
 
-  // Totals
-  const totalAmountPaid = useMemo(() =>
-    participants.length > 0 ? participants.reduce((sum, p) => sum + p.amountPaid, 0) : 0
-  , [participants]);
+  const handleAmountPaidChange = (participantId: string, value: string) => {
+    if (!eventId) return;
+    const amount = parseFloat(value);
+    const updatedParticipants = participants.map(p =>
+      p.id === participantId ? { ...p, amountPaid: !isNaN(amount) ? amount : 0 } : p
+    );
+    updateEvent(eventId, { participants: updatedParticipants });
+  };
 
-  const totalAmountOwed = useMemo(() =>
-    participants.length > 0 ? participants.reduce((sum, p) => sum + p.amountOwed, 0) : 0
-  , [participants]);
-
-  const totalExpenses = useMemo(() =>
-    expenses.length > 0 ? expenses.reduce((sum, e) => sum + (e.isPaid ? e.amount : 0), 0) : 0
-  , [expenses]);
-
-  const balance = useMemo(() => totalAmountPaid - totalExpenses, [totalAmountPaid, totalExpenses]);
-
+  // 追加ハンドラをContext経由に修正
   const handleAddParticipant = () => {
-    if (newParticipantName && newParticipantAmountOwed) {
-      const newP: Participant = {
-        id: String(Date.now()),
+    if (newParticipantName && newParticipantAmountOwed && eventId) {
+      const success = addParticipant(eventId, {
         name: newParticipantName,
         email: newParticipantEmail,
         amountOwed: parseFloat(newParticipantAmountOwed),
-        amountPaid: 0,
-        paymentDueDate: undefined,
-        isPaid: false
-      };
-      setParticipants(prev => [...prev, newP]);
-      setNewParticipantName('');
-      setNewParticipantEmail('');
-      setNewParticipantAmountOwed('');
-      setIsAddParticipantDialogOpen(false);
+        amountPaid: 0, // 初期値
+        isPaid: false // 初期値
+        // paymentDueDate はここでは設定しない
+      });
+      if (success) {
+        setNewParticipantName('');
+        setNewParticipantEmail('');
+        setNewParticipantAmountOwed('');
+        setIsAddParticipantDialogOpen(false);
+      }
+      // 失敗時のトースト通知はContext側で表示される
     }
   };
 
-  const handleAddExpense = () => {
-    if (newExpenseDescription && newExpenseAmount) {
-      const newE: Expense = {
-        id: String(Date.now()),
-        description: newExpenseDescription,
-        amount: parseFloat(newExpenseAmount),
-        ...(newExpenseRemarks && { remarks: newExpenseRemarks }),
-        isPaid: false
-      };
-      setExpenses(prev => [...prev, newE]);
-      setNewExpenseDescription('');
-      setNewExpenseAmount('');
-      setNewExpenseRemarks('');
-      setIsAddExpenseDialogOpen(false);
-    }
-  };
-
-  const handleSetPaymentDueDate = (id: string) => {
-    setSelectedParticipantId(id);
-    const p = participants.find(p => p.id === id);
-    setPaymentDueDate(p?.paymentDueDate);
-  };
-
-  const handleDateSelect = (date: Date | undefined) => {
-    if (selectedParticipantId) {
-      setParticipants(ps => ps.map(p => p.id === selectedParticipantId ? {...p, paymentDueDate: date} : p));
-    }
-    setPaymentDueDate(date);
-    setSelectedParticipantId(null);
-  };
-
+  // 削除ハンドラをContext経由に修正 (関数名をJSXに合わせる)
   const handleDeleteParticipant = (id: string) => {
     setSelectedParticipantId(id);
     setIsDeleteDialogOpen(true);
   };
 
   const confirmDeleteParticipant = () => {
-    if (selectedParticipantId) {
-      setParticipants(ps => ps.filter(p => p.id !== selectedParticipantId));
+    if (selectedParticipantId && eventId) {
+      deleteParticipant(eventId, selectedParticipantId);
       setIsDeleteDialogOpen(false);
       setSelectedParticipantId(null);
     }
   };
 
+  // 追加ハンドラをContext経由に修正
+  const handleAddExpense = () => {
+    if (newExpenseDescription && newExpenseAmount && eventId) {
+      const success = addExpenseItem(eventId, {
+        description: newExpenseDescription,
+        amount: parseFloat(newExpenseAmount),
+        remarks: newExpenseRemarks,
+        isPaid: false // 初期値
+      });
+      if (success) {
+        setNewExpenseDescription('');
+        setNewExpenseAmount('');
+        setNewExpenseRemarks('');
+        setIsAddExpenseDialogOpen(false);
+      }
+    }
+  };
+
+  // 削除ハンドラをContext経由に修正 (関数名をJSXに合わせる)
   const handleDeleteExpense = (id: string) => {
     setSelectedExpenseId(id);
     setIsExpenseDeleteDialogOpen(true);
   };
 
   const confirmDeleteExpense = () => {
-    if (selectedExpenseId) {
-      setExpenses(es => es.filter(e => e.id !== selectedExpenseId));
+    if (selectedExpenseId && eventId) {
+      deleteExpenseItem(eventId, selectedExpenseId);
       setIsExpenseDeleteDialogOpen(false);
       setSelectedExpenseId(null);
     }
   };
 
-  const handlePaymentStatusChange = (id: string, checked: boolean) => {
-    setParticipants(prev => prev.map(p => {
-      if (p.id === id) {
-        const newPaid = checked ? p.amountOwed : 0;
-        setAmountPaidManually(man => ({ ...man, [id]: String(newPaid) }));
-        return { ...p, isPaid: checked, amountPaid: newPaid };
-      }
-      return p;
-    }));
+  // Initialize date select handler
+  const handleSetPaymentDueDate = (id: string) => {
+    setSelectedParticipantId(id);
+    // 不要な setPaymentDueDate 呼び出しを削除
   };
 
-  const handleExpensePaymentStatusChange = (id: string, checked: boolean) => {
-    setExpenses(prev => prev.map((e: Expense) => e.id === id ? { ...e, isPaid: checked } : e));
+  // 修正：ローカルの paymentDueDate を削除し、Contextの値を直接使用
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!eventId || !selectedParticipantId) return;
+    const updatedParticipants = participants.map(p =>
+      p.id === selectedParticipantId ? { ...p, paymentDueDate: date } : p
+    );
+    updateEvent(eventId, { participants: updatedParticipants });
+    setSelectedParticipantId(null); // ポップオーバーを閉じるためにリセット
   };
+
   // --- End of handlers ---
 
   // Enhanced loading and error states
@@ -344,6 +313,27 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
       </div>
     );
   }
+
+  // currentEventからリストを取得
+  const participants: Participant[] = useMemo(() => currentEvent?.participants || [], [currentEvent]);
+  const expenses: ExpenseItem[] = useMemo(() => currentEvent?.expenses || [], [currentEvent]);
+
+  // Totals
+  const totalAmountPaid = useMemo(() => {
+    if (!participants || participants.length === 0) return 0;
+    return participants.reduce((sum, p) => sum + (typeof p.amountPaid === 'number' && !isNaN(p.amountPaid) ? p.amountPaid : 0), 0);
+  }, [participants]);
+
+  const totalAmountOwed = useMemo(() => {
+    if (!participants || participants.length === 0) return 0;
+    return participants.reduce((sum, p) => sum + (typeof p.amountOwed === 'number' && !isNaN(p.amountOwed) ? p.amountOwed : 0), 0);
+  }, [participants]);
+
+  const totalExpenses = useMemo(() =>
+    expenses.reduce((sum, e) => sum + (e.isPaid ? e.amount : 0), 0)
+  , [expenses]);
+
+  const balance = useMemo(() => totalAmountPaid - totalExpenses, [totalAmountPaid, totalExpenses]);
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -537,11 +527,12 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
                             <TableRow key={p.id}>
                               <TableCell>{p.name}</TableCell>
                               <TableCell>{p.email ?? '-'}</TableCell>
-                              <TableCell className="text-right">¥{p.amountOwed.toLocaleString()}</TableCell>
+                              <TableCell className="text-right">¥{(p.amountOwed ?? 0).toLocaleString()}</TableCell>
                               <TableCell className="text-right">
                                 <Input
                                   type="number"
-                                  value={amountPaidManually[p.id] ?? p.amountPaid.toString()}
+                                  // amountPaidManually を削除し、Contextの値を直接表示
+                                  value={p.amountPaid !== undefined && p.amountPaid !== null ? p.amountPaid.toString() : '0'}
                                   onChange={(e) => handleAmountPaidChange(p.id, e.target.value)}
                                   className="h-8 w-24 text-right inline-block"
                                   min="0"
@@ -563,7 +554,8 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
                                   <PopoverContent className="w-auto p-0" align="start" side="bottom">
                                     <Calendar
                                       mode="single"
-                                      selected={selectedParticipantId === p.id ? paymentDueDate : p.paymentDueDate}
+                                      // ローカルの paymentDueDate を削除し、Contextの値を直接使用
+                                      selected={p.paymentDueDate}
                                       onSelect={handleDateSelect}
                                     />
                                   </PopoverContent>
@@ -580,6 +572,7 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
                                 <Button
                                   variant="ghost"
                                   size="icon"
+                                  // 関数名を修正
                                   onClick={() => handleDeleteParticipant(p.id)}
                                 >
                                   <Icons.trash className="h-4 w-4" />
@@ -687,7 +680,7 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
                              <TableRow key={expense.id}>
                                <TableCell>{expense.description}</TableCell>
                                <TableCell>{expense.remarks ?? '-'}</TableCell>
-                               <TableCell className="text-right">¥{expense.amount.toLocaleString()}</TableCell>
+                               <TableCell className="text-right">¥{(expense.amount ?? 0).toLocaleString()}</TableCell>
                                <TableCell className="text-center">
                                  <Checkbox
                                    id={`expense-paid-${expense.id}`}
@@ -699,6 +692,7 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
                                  <Button
                                    variant="ghost"
                                    size="icon"
+                                   // 関数名を修正
                                    onClick={() => handleDeleteExpense(expense.id)}
                                  >
                                    <Icons.trash className="h-4 w-4" />
@@ -723,21 +717,21 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
                 <CardContent className="space-y-3 pt-4">
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">{t('Total Amount Owed (All Participants)')}</span>
-                    <span className="font-medium">¥{totalAmountOwed.toLocaleString()}</span>
+                    <span className="font-medium">¥{(totalAmountOwed ?? 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">{t('Total Income (JPY)')}</span>
-                    <span className="font-medium">¥{totalAmountPaid.toLocaleString()}</span>
+                    <span className="font-medium">¥{(totalAmountPaid ?? 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">{t('Total Expenses (JPY)')}</span>
-                    <span className="font-medium">¥{totalExpenses.toLocaleString()}</span>
+                    <span className="font-medium">¥{(totalExpenses ?? 0).toLocaleString()}</span>
                   </div>
                   <Separator />
                   <div className="flex justify-between items-center font-semibold text-lg">
                     <span>{t('Balance (Total Income - Total Expenses)')}</span>
                     <span className={cn(balance >= 0 ? 'text-green-600' : 'text-red-600')}>
-                      ¥{balance.toLocaleString()}
+                      ¥{(balance ?? 0).toLocaleString()}
                     </span>
                   </div>
                 </CardContent>
@@ -756,6 +750,7 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+            {/* 関数名を修正 */}
             <AlertDialogAction onClick={confirmDeleteParticipant}>{t('Confirm')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -769,6 +764,7 @@ export default function EventDetailsClient({ params }: { params: { eventId: stri
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t('Cancel')}</AlertDialogCancel>
+            {/* 関数名を修正 */}
             <AlertDialogAction onClick={confirmDeleteExpense}>{t('Confirm')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
