@@ -543,7 +543,7 @@ export default function CalendarPage() {
             </div>
           </SidebarFooter>
         </Sidebar>
-        <main className="w-full p-4 space-y-4 transition-all duration-300 ease-in-out max-w-full" style={{transitionProperty: 'width, margin', transform: 'translateZ(0)', willChange: 'width, margin'}} aria-label="カレンダー">
+        <main className="w-full p-2 md:p-0 space-y-4 transition-all duration-300 ease-in-out max-w-full" style={{transitionProperty: 'width, margin', transform: 'translateZ(0)', willChange: 'width, margin'}} aria-label="カレンダー">
           <PageHeader
             title={t('calendar')}
             description={t('calendar_description')}
@@ -570,8 +570,11 @@ export default function CalendarPage() {
           </div>
           {/* カレンダー表示部分 */}
           <Card>
-            <CardContent className="pt-6">
-              {renderCalendarView()}
+            <CardContent className="pt-6 p-0 md:p-0">
+              <div className="calendar-container w-full max-w-full md:px-4">
+                {/* カレンダー本体 */}
+                {renderCalendarView()}
+              </div>
             </CardContent>
           </Card>
           {/* 凡例 */}

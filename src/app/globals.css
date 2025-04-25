@@ -113,6 +113,14 @@
 }
 
 /* カレンダーのスタイル */
+.calendar-container {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  position: relative; /* 追加: 相対位置指定 */
+  min-height: 500px; /* 追加: 最小高さを確保 */
+}
+
 .calendar-grid {
   display: grid;
   grid-template-rows: auto 1fr;
@@ -162,7 +170,7 @@
   margin-bottom: 4px;
 }
 
-/* イベントコンテナを修正 - heightを0から適切な値に変更 */
+/* イベントコンテナを修正 */
 .calendar-events-container {
   position: absolute;
   top: 35px; /* 曜日ヘッダーの高さに合わせて調整 */
@@ -172,7 +180,8 @@
   width: 100%;
   height: calc(100% - 35px); /* 高さを適切に確保 */
   pointer-events: none; /* コンテナ自体はクリックを通過させる */
-  z-index: 5;
+  z-index: 10; /* z-indexを上げて他の要素より前面に表示 */
+  overflow: visible; /* オーバーフローを表示 */
 }
 
 .calendar-event-bar {
