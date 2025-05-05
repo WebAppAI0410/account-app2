@@ -4,8 +4,7 @@ import { KeyboardResize } from '@capacitor/keyboard';
 const config: CapacitorConfig = {
   appId: 'com.app0410.budgetshukin',
   appName: '予算・集金管理',
-  webDir: 'out', // Next.jsのビルド出力ディレクトリ
-  bundledWebRuntime: false,
+  webDir: 'out',
   plugins: {
     SplashScreen: {
       launchShowDuration: 2000,
