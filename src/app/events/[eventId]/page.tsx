@@ -1,5 +1,9 @@
 import EventDetailsClient from './EventDetailsClient'; // Import the client component
 
+export async function generateStaticParams() {
+  return [{ eventId: 'placeholder' }];
+}
+
 // This is the main Server Component for the route
 export default function EventDetailPage({ 
   params 
