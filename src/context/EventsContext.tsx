@@ -87,13 +87,15 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({ children }) => {
 
   // localStorage からイベントデータを読み込む
   const loadEventsFromStorage = () => {
-    try {
-      const storedEvents = localStorage.getItem('events');
-      if (storedEvents) {
-        return JSON.parse(storedEvents);
+    if (typeof window !== 'undefined') {
+      try {
+        const storedEvents = localStorage.getItem('events');
+        if (storedEvents) {
+          return JSON.parse(storedEvents);
+        }
+      } catch (error) {
+        console.error('Failed to load events from localStorage:', error);
       }
-    } catch (error) {
-      console.error('Failed to load events from localStorage:', error);
     }
     return initialEventsData;
   };
@@ -102,10 +104,12 @@ export const EventsProvider: React.FC<EventsProviderProps> = ({ children }) => {
   
   // イベントデータが変更されたら localStorage に保存
   useEffect(() => {
-    localStorage.setItem('events', JSON.stringify(events));
-    
-    if (process.env.NODE_ENV === 'development') {
-      console.log('EventsContext: Events saved:', events.map(e => ({id: e.id, name: e.name})));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('events', JSON.stringify(events));
+      
+      if (process.env.NODE_ENV === 'development') {
+        console.log('EventsContext: Events saved:', events.map(e => ({id: e.id, name: e.name})));
+      }
     }
   }, [events]);
 
