@@ -25,13 +25,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-// Define metadata for the app
-export const metadata: Metadata = {
-  // Use the shorter name for the general title
-  title: '予算・集金管理',
-  // Use the longer name for the description
-  description: '予算・集金かんたん管理｜サークル費や飲み会費が管理できる会計アプリ',
-};
 
 export default function RootLayout({
   children,
