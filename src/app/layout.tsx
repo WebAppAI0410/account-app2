@@ -8,6 +8,10 @@ import { SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from "@/components/ui/toaster";
 import AdBannerManagerClient from '@/app/AdBannerManagerClient'; 
 import { BottomNavigation } from '@/components/BottomNavigation';
+import { useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Purchases } from '@revenuecat/purchases-capacitor';
+import { REVENUECAT_CONFIG } from '@/lib/revenuecat-config';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -32,6 +36,26 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      const initRevenueCat = async () => {
+        try {
+          await Purchases.configure({
+            apiKey: Capacitor.getPlatform() === 'ios'
+              ? REVENUECAT_CONFIG.API_KEY.ios
+              : REVENUECAT_CONFIG.API_KEY.android,
+            appUserID: null // RevenueCatがユーザーIDを自動生成
+          });
+          console.log('RevenueCat initialized successfully');
+        } catch (error) {
+          console.error('Failed to initialize RevenueCat:', error);
+        }
+      };
+      
+      initRevenueCat();
+    }
+  }, []);
+
   return (
     // Set language to Japanese
     <html lang="ja">

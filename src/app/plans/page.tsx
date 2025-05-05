@@ -1,6 +1,9 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { Capacitor } from '@capacitor/core'
+import { Purchases } from '@revenuecat/purchases-capacitor'
+import { REVENUECAT_CONFIG } from '@/lib/revenuecat-config'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card'
 import { PageHeader } from '@/components/PageHeader'
 import useTranslation from '@/hooks/use-translation'
@@ -20,6 +23,30 @@ export default function PlansPage() {
   const { toast } = useToast()
   const [isLoading, setIsLoading] = useState(false)
   const [isDowngrading, setIsDowngrading] = useState(false)
+  const [priceDisplay, setPriceDisplay] = useState('¥480')
+
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      const getOfferings = async () => {
+        try {
+          const offerings = await Purchases.getOfferings();
+          if (offerings.current?.availablePackages && offerings.current.availablePackages.length > 0) {
+            const monthlyPackage = offerings.current?.availablePackages.find(
+              pkg => pkg.identifier === 'monthly'
+            );
+            
+            if (monthlyPackage) {
+              setPriceDisplay(monthlyPackage.product.priceString);
+            }
+          }
+        } catch (error) {
+          console.error('Failed to get offerings:', error);
+        }
+      };
+      
+      getOfferings();
+    }
+  }, []);
 
   // 有効期限を表示用にフォーマット
   const formatExpiryDate = (date: Date | null): string => {
