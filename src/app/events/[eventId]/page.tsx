@@ -12,11 +12,9 @@ interface EventPageProps {
 
 // This is the main Server Component for the route
 // It receives params and passes them down to the Client Component
-const EventDetailPage = async (props: EventPageProps) => {
-  // paramsをawaitして取得
+const EventDetailPage = (props: EventPageProps) => {
   const { params } = props;
-  const awaitedParams = await params;
-  const eventId = awaitedParams.eventId;
+  const eventId = params.eventId;
   console.log('EventDetailPage extracted eventId:', eventId);
   // Render the Client Component, passing the params object
   return <EventDetailsClient params={{ eventId }} />;
